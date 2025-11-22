@@ -6,6 +6,7 @@ public class Participant {
     private int skill_level;
     private  int personality_score;
     private  String personality_type;
+    private int[] responses;
 
     // parameterized constructor
     public Participant(String id,String name,String preferred_sport,String preferred_role,int skill_level,int personality_score,String personality_type) {
@@ -13,19 +14,25 @@ public class Participant {
         this.name = name;
         this.preferred_sport = preferred_sport;
         this.preferred_role = preferred_role;
-        this.skill_level = skill_level;
+        //this.skill_level = skill_level;
         this.personality_score = 0;
         this.personality_type = "pending";
     }
 
     // default constructor
-//    public Participant(){
-//        this.id = "P001";
-//        this.name = "Unknown";
-//        this.preferred_sport = "Unknown";
-//        this.skill_level = 0;
-//
-//    }
+    public Participant(){
+        this.id = "P001";
+        this.name = "Unknown";
+        this.preferred_sport = "Unknown";
+        this.skill_level = 0;
+    }
+
+    public int[] getResponses() {
+        return responses;
+    }
+    public void setResponses(int[] responses) {
+        this.responses = responses;
+    }
     public String getParticipantId() {
         return id;
     }
@@ -66,12 +73,12 @@ public class Participant {
         }
         this.preferred_sport = preferred_sport;
     }
-    public void setSkill_level(int skill_level) {
-        if (skill_level < 0||skill_level > 5){
-            throw new IllegalArgumentException("Skill level must be between 0 and 5");
-        }
-        this.skill_level = skill_level;
-    }
+//    public void setSkill_level(int[] skill_level) {
+//        if (skill_level < 0||skill_level > 5){
+//            throw new IllegalArgumentException("Skill level must be between 0 and 5");
+//        }
+//        this.skill_level = skill_level;
+//    }
     public void setPersonality_score(int personality_score) {
         this.personality_score=personality_score;
     }

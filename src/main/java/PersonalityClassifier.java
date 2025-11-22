@@ -44,8 +44,9 @@ public class PersonalityClassifier {
         }
     }
 
-    // High-level method: validate → compute → classify → update participant
-    public void processParticipant(Participant p, int[] responses) {
+    public void classifyParticipant(Participant p) {
+        int[] responses = p.getResponses();
+
         if (!validateResponses(responses)) {
             p.setPersonality_type("Invalid");
             p.setPersonality_score(0);
@@ -59,6 +60,23 @@ public class PersonalityClassifier {
         p.setPersonality_score(scaled);
         p.setPersonality_type(type);
     }
+
+
+    // High-level method: validate → compute → classify → update participant
+//    public void processParticipant(Participant p, int[] responses) {
+//        if (!validateResponses(responses)) {
+//            p.setPersonality_type("Invalid");
+//            p.setPersonality_score(0);
+//            return;
+//        }
+//
+//        int total = computeTotalScore(responses);
+//        int scaled = computeScaledScore(total);
+//        String type = classifyPersonality(scaled);
+//
+//        p.setPersonality_score(scaled);
+//        p.setPersonality_type(type);
+//    }
 
 
 }
