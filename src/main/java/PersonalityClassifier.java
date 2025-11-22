@@ -1,32 +1,65 @@
 public class PersonalityClassifier {
 
-    public static int calculateScore(int q1, int q2, int q3, int q4, int q5) {
-        if (!isValidRating(q1) || !isValidRating(q2) || !isValidRating(q3)
-                || !isValidRating(q4) || !isValidRating(q5)) {
-            throw new IllegalArgumentException(
-                    "All ratings must be between 1 and 5");
+  //Validate that the survey contains exactly 5 responses
+  // and each is between 1 and 5.
+    public boolean validateResponses(int[] responses) {
+        if (responses == null || responses.length != 5) {
+            return false;
         }
 
-        int total = q1 + q2 + q3 + q4 + q5;
-        return total * 4; // Scale to 100
+        for (int r : responses) {
+            if (r < 1 || r > 5) {
+                return false;
+            }
+        }
+        return true;
     }
 
-    private static boolean isValidRating(int rating) {
-        return rating >= 1 && rating <= 5;
+    // Compute total score from Q1–Q5
+    public int computeTotalScore(int[] responses) {
+        int total = 0;
+        for (int r : responses) {
+            total += r;
+        }
+        return total;
     }
 
-    public static String classify(int score) {
-        if (score >= 90 && score <= 100) {
+    // Convert raw score (5–25) to scaled score (20–100)
+    public int computeScaledScore(int totalScore) {
+        return totalScore * 4;
+    }
+
+    // Determine personality type based on scoring rules
+    public String classifyPersonality(int scaledScore) {
+        if (scaledScore >= 90 && scaledScore <= 100) {
             return "Leader";
-        } else if (score >= 70 && score <= 89) {
+        } else if (scaledScore >= 70 && scaledScore <= 89) {
             return "Balanced";
-        } else if (score >= 50 && score <= 69) {
+        } else if (scaledScore >= 50 && scaledScore <= 69) {
             return "Thinker";
-        } else if (score >= 20 && score <= 49) {
+        } else if (scaledScore >= 20 && scaledScore <= 49) {
             return "Normal";
         } else {
             throw new IllegalArgumentException("Invalid personality score");
         }
     }
+
+    // High-level method: validate → compute → classify → update participant
+    public void processParticipant(Participant p, int[] responses) {
+        if (!validateResponses(responses)) {
+            p.setPersonality_type("Invalid");
+            p.setPersonality_score(0);
+            return;
+        }
+
+        int total = computeTotalScore(responses);
+        int scaled = computeScaledScore(total);
+        String type = classifyPersonality(scaled);
+
+        p.setPersonality_score(scaled);
+        p.setPersonality_type(type);
+    }
+
+
 }
 

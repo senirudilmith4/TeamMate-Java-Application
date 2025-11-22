@@ -1,31 +1,33 @@
 public class Participant {
-    private int participantId;
+    private String id;
     private String name;
     private String preferred_sport;
+    private String preferred_role;
     private int skill_level;
-    private int personality_score;
-    private String personality_type;
+    private  int personality_score;
+    private  String personality_type;
 
     // parameterized constructor
-    public Participant(int participantId,String name,String preferred_sport,int skill_level,int personality_score,String personality_type) {
-        this.participantId = participantId;
+    public Participant(String id,String name,String preferred_sport,String preferred_role,int skill_level,int personality_score,String personality_type) {
+        this.id = id;
         this.name = name;
         this.preferred_sport = preferred_sport;
+        this.preferred_role = preferred_role;
         this.skill_level = skill_level;
         this.personality_score = 0;
         this.personality_type = "pending";
     }
 
     // default constructor
-    public Participant(){
-        this.participantId = 0;
-        this.name = "Unknown";
-        this.preferred_sport = "Unknown";
-        this.skill_level = 0;
-
-    }
-    public int getParticipantId() {
-        return participantId;
+//    public Participant(){
+//        this.id = "P001";
+//        this.name = "Unknown";
+//        this.preferred_sport = "Unknown";
+//        this.skill_level = 0;
+//
+//    }
+    public String getParticipantId() {
+        return id;
     }
     public String getName() {
         return name;
@@ -42,12 +44,16 @@ public class Participant {
     public String getPersonality_type() {
         return personality_type;
     }
-    public void setParticipantId(int participantId) {
-        if (participantId < 0){
-            throw new IllegalArgumentException("Participant id cannot be negative");
-        }
-        this.participantId = participantId;
+    public String getPreferred_role(){
+        return preferred_role;
     }
+    public void setPreferred_role(String preferred_role) {
+        this.preferred_role = preferred_role;
+    }
+    public void setParticipantId(String participantId) {
+        this.id = participantId;
+    }
+
     public void setName(String name) {
         if (name == null||name.trim().isEmpty()){
             throw new IllegalArgumentException("Name cannot be empty");
@@ -66,14 +72,21 @@ public class Participant {
         }
         this.skill_level = skill_level;
     }
+    public void setPersonality_score(int personality_score) {
+        this.personality_score=personality_score;
+    }
+     public void setPersonality_type(String personality_type) {
+        this.personality_type=personality_type;
+     }
 
     @Override
     public String toString() {
         return "Participant{" +
-                "id=" + participantId +
+                "id=" + id +
                 ", name='" + name + '\'' +
                 ", sport='" + preferred_sport + '\'' +
-                ", skill=" + skill_level +
+                ", role='" +preferred_role + '\''+
+                ", skill=" + skill_level + '\''+
                 ", personality=" + personality_score + " (" + personality_type + ")" +
                 '}';
     }
