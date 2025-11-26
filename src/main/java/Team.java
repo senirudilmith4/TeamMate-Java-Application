@@ -89,4 +89,7 @@ public class Team {
         return false;
     }
 
+    public String getID(){
+        return id;
+    }
 }

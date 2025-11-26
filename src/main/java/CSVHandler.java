@@ -1,20 +1,155 @@
+import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CSVHandler {
 
-    // --- Attributes ---
-    private String inputFilePath;
-    private String outputFilePath;
+    private static final String filePath = "participants.csv";
 
-    // --- Constructor ---
-    public CSVHandler(String inputFilePath, String outputFilePath) {
-        this.inputFilePath = inputFilePath;
-        this.outputFilePath = outputFilePath;
+    // Save list of participants (overwrite file)
+    public void saveAllParticipants(List<Participant> participants) {
+        try (FileWriter writer = new FileWriter(filePath)) {
+            // write header
+            writer.write("id,name,preferredSport,preferredRole,skillLevel,personalityScore,personalityType\n");
+
+            for (Participant p : participants) {
+                writer.write(formatParticipant(p) + "\n");
+            }
+
+            System.out.println("📁 All participants saved to CSV successfully!");
+
+        } catch (IOException e) {
+            System.out.println("❌ Error writing CSV: " + e.getMessage());
+        }
     }
 
-    // --- Methods ---
-    public List<Participant> loadParticipants() { return null; }
-    public boolean validateCSVRow(/*row data*/) { return true; }
-    public void saveTeams(List<Team> teams) { }
-    public void handleFileErrors(Exception e) { }
+    // Append only 1 participant (when adding one)
+    public void appendParticipant(Participant p) {
+        boolean fileExists = new java.io.File(filePath).exists();
+
+        try (FileWriter writer = new FileWriter(filePath, true)) {
+
+            // write header only if file didn't exist
+            if (!fileExists) {
+                writer.write("id,name,preferredSport,preferredRole,skillLevel,personalityScore,personalityType\n");
+            }
+
+            writer.write(formatParticipant(p) + "\n");
+
+            System.out.println("📁 Participant stored in CSV!");
+
+        } catch (IOException e) {
+            System.out.println("❌ Error writing CSV: " + e.getMessage());
+        }
+    }
+
+    // Convert Participant → CSV line
+    private String formatParticipant(Participant p) {
+        return p.getParticipantId() + "," +
+                p.getName() + "," +
+                p.getPreferredSport() + "," +
+                p.getPreferredRole() + "," +
+                p.getSkillLevel() + "," +
+                p.getPersonalityScore() + "," +
+                p.getPersonalityType();
+    }
+
+    public List<Participant> loadParticipants() {
+        List<Participant> participants = new ArrayList<>();
+
+        File file = new File(filePath);
+        if (!file.exists()) {
+            System.out.println("⚠ No CSV file found. Returning empty list.");
+            return participants;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+
+            String line;
+            boolean isHeader = true;
+
+            while ((line = reader.readLine()) != null) {
+
+                // Skip the header line
+                if (isHeader) {
+                    isHeader = false;
+                    continue;
+                }
+
+                String[] data = line.split(",");
+
+                // must match your CSV format
+                if (data.length != 7) {
+                    System.out.println("⚠ Skipping invalid CSV row: " + line);
+                    continue;
+                }
+
+                Participant p = new Participant();
+
+                p.setParticipantId(data[0]);          // id
+                p.setName(data[1]);                   // name
+                p.setPreferredSport(data[2]);         // sport
+
+                // Convert preferredRole (String → Enum Role)
+                try {
+                    Role role = Role.valueOf(data[3].toUpperCase());
+                    p.setPreferredRole(role);
+                } catch (Exception e) {
+                    System.out.println("⚠ Invalid role in CSV: " + data[3]);
+                    continue;
+                }
+
+                p.setSkillLevel(Integer.parseInt(data[4])); // skill level
+                p.setPersonalityScore(Integer.parseInt(data[5])); // personality score
+
+                // Convert personalityType (String → Enum PersonalityType)
+                try {
+                    PersonalityType pt = PersonalityType.valueOf(data[6].toUpperCase());
+                    p.setPersonalityType(pt);
+                } catch (Exception e) {
+                    System.out.println("⚠ Invalid personality type in CSV: " + data[6]);
+                    continue;
+                }
+
+                participants.add(p);
+            }
+
+        } catch (IOException e) {
+            System.out.println("❌ Error reading CSV: " + e.getMessage());
+        }
+
+        System.out.println("📥 Loaded " + participants.size() + " participants from CSV.");
+        return participants;
+    }
+
+    public void saveFormedTeams(List<Team> teams) {
+        String fileName = "formedTeams.csv";
+
+        try (PrintWriter pw = new PrintWriter(new FileWriter(fileName))) {
+
+            // Write header
+            pw.println("TeamID,ParticipantID,Name,Role,Sport,Skill,Personality");
+
+            // Write each team's members
+            for (Team team : teams) {
+                for (Participant p : team.getMembers()) {
+                    pw.printf("%s,%s,%s,%s,%s,%d,%s%n",
+                            team.getID(),
+                            p.getId(),
+                            p.getName(),
+                            p.getPreferredRole(),
+                            p.getPreferredSport(),
+                            p.getSkillLevel(),
+                            p.getPersonalityType()
+                    );
+                }
+            }
+
+            System.out.println("📁 formedTeams.csv saved successfully!");
+
+        } catch (IOException e) {
+            System.out.println("❌ Error writing formedTeams.csv: " + e.getMessage());
+        }
+    }
+
 }

@@ -1,9 +1,9 @@
 
     public enum Role {
-        Strategist,
-        Attacker,
-        Defender,
-        Supporter,
-        Coordinator
+        STRATEGIST,
+        ATTACKER,
+        DEFENDER,
+        SUPPORTER,
+        COORDINATOR,
     }
 

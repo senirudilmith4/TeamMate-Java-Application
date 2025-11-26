@@ -8,6 +8,8 @@ public class AppController {
     private static List<Team> formedTeams = new ArrayList<>();
     private SurveyProcess survey = new SurveyProcess();
     private PersonalityClassifier classifier = new PersonalityClassifier();
+    private CSVHandler csvHandler = new CSVHandler();
+    Scanner scanner = new Scanner(System.in);
 
 
 
@@ -15,13 +17,14 @@ public class AppController {
     public void completeSurvey(){
         Participant p = survey.conductSurvey(); // conducts survey
         classifier.classifyParticipant(p);  // classify personality
-        participants.add(p);                // store participant
+        participants.add(p); // store participant
+        csvHandler.appendParticipant(p);
 
 
         // generate ID if needed
        // p.setId(UUID.randomUUID().toString());
 
-        participants.add(p);
+
         System.out.println("✅ Participant added successfully!");
         System.out.println("   Name: " + p.getName());
         System.out.println("   Personality: " + p.getPersonalityType());
@@ -40,10 +43,37 @@ public class AppController {
             System.out.println(p.getName() + " | Personality: " + p.getPersonalityType());
         }
     }
-    public void  formTeams() {
-        Organizer organizer = new Organizer();
-        organizer.initiateTeamFormation();
+    public void formTeams() {
+
+
+        System.out.print("Enter desired team size (minimum 2): ");
+        int teamSize;
+
+        while (true) {
+            try {
+                teamSize = Integer.parseInt(scanner.nextLine().trim());
+
+                if (teamSize < 2) {
+                    System.out.print("❌ Team size must be at least 2. Enter again: ");
+                    continue;
+                }
+                break;
+
+            } catch (NumberFormatException e) {
+                System.out.print("❌ Invalid number. Enter a valid team size: ");
+            }
+        }
+
+        Organizer organizer = new Organizer(teamSize);
+        organizer.initiateTeamFormation();  // 🔥 pass team size
+
+        System.out.println("✅ Team formation started with team size: " + teamSize);
     }
+
+
+    public void loadAllParticipantsAtStart() {
+        participants = csvHandler.loadParticipants();
+        System.out.println("Participants loaded: " + participants.size()); }
 //        if (participants.isEmpty()) {
 //            System.out.println("No participants available to form teams.");
 //            return new ArrayList<>();

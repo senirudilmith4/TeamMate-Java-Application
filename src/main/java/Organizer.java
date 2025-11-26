@@ -9,7 +9,11 @@ public class Organizer {
 
     private List<Team> formedTeams;
 
-     //public void startProcess() { }
+    public Organizer(int teamSize) {
+        this.fileHandler = new CSVHandler();
+        this.formedTeams = new ArrayList<>();
+        this.teamSize = teamSize;
+    }
 
     // Set team size
     public void setTeamSize(int teamSize) {
@@ -26,11 +30,11 @@ public class Organizer {
 
         try {
             // Create TeamBuilder instance with team size (example: 5 per team)
-            TeamBuilder builder = new TeamBuilder(5); // adjust teamSize as needed
+            TeamBuilder builder = new TeamBuilder(teamSize); // adjust teamSize as needed
 
             // Form teams concurrently
             formedTeams = builder.buildTeamsWithConcurrency(AppController.participants);
-
+            fileHandler.saveFormedTeams(formedTeams);
             // Display teams
             for (Team team : formedTeams) {
                 System.out.println("\n=== " + //team.get()

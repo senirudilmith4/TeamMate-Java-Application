@@ -27,7 +27,7 @@ public class TeamMateApp {
                    // generateSampleData();
                     break;
                 case 3:
-                   appController.viewParticipants();
+                   appController.loadAllParticipantsAtStart();
                     break;
                 case 4:
                     appController.formTeams();

@@ -19,12 +19,20 @@ public class SurveyProcess {
                 "        Coordinator): ");
         Role role = null;
         while (role == null) {
-            String input = scanner.nextLine().trim();
-            try {
-                role = Role.valueOf(input);
-            } catch (IllegalArgumentException e) {
-                System.out.print("Invalid role! Please enter LEADER, THINKER, or BALANCED: ");
+            String input = scanner.nextLine().trim();  // get input and trim spaces
+
+            // Try to match with enum values ignoring case
+            for (Role r : Role.values()) {
+                if (r.name().equalsIgnoreCase(input)) {
+                    role = r;
+                    break;
+                }
             }
+
+            if (role == null) {
+                System.out.print("Invalid role. Please enter again: ");
+            }
+
         }
 
         System.out.print("Enter Skill Level (1-5): ");
