@@ -1,5 +1,6 @@
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -52,27 +53,27 @@ public class TeamBuilder {
         // Pre-sort participants for better distribution
         List<Participant> sortedPool = preprocessParticipants(participants);
 
+        // ✅ FIX: Use BlockingQueue for thread-safe participant access
+        BlockingQueue<Participant> participantQueue = new LinkedBlockingQueue<>(sortedPool);
+
+        // ✅ FIX: Thread-safe counter
+        AtomicInteger teamCounter = new AtomicInteger(1);
+
         // Create thread pool
         ExecutorService executor = Executors.newFixedThreadPool(numThreads);
         List<Team> allTeams = Collections.synchronizedList(new ArrayList<>());
-        List<Participant> remainingPool = Collections.synchronizedList(new ArrayList<>(sortedPool));
 
-        // Create team formation tasks
+        // ✅ FIX: Calculate team count ONCE before submitting tasks
+        int maxPossibleTeams = sortedPool.size() / teamSize;
+
+        // Submit exactly the number of teams we can form
         List<Future<Team>> futures = new ArrayList<>();
-        int teamCounter = 1;
-
-        while (remainingPool.size() >= teamSize) {
-            final int currentTeamNum = teamCounter++;
-
-            // Submit a task to form one team
+        for (int i = 0; i < maxPossibleTeams; i++) {
             Future<Team> future = executor.submit(() -> {
-                return formSingleTeamConcurrent(remainingPool, "Team-" + currentTeamNum);
+                return formSingleTeamFromQueue(participantQueue,
+                        "Team-" + teamCounter.getAndIncrement());
             });
-
             futures.add(future);
-
-            // Small delay to avoid thread contention
-            Thread.sleep(5);
         }
 
         // Collect all formed teams
@@ -84,6 +85,7 @@ public class TeamBuilder {
                 }
             } catch (Exception e) {
                 System.err.println("⚠ Thread error: " + e.getMessage());
+                e.printStackTrace();
             }
         }
 
@@ -91,12 +93,149 @@ public class TeamBuilder {
         executor.awaitTermination(30, TimeUnit.SECONDS);
 
         // Handle remaining participants
-        if (!remainingPool.isEmpty() && !allTeams.isEmpty()) {
-            System.out.println("📝 Distributing " + remainingPool.size() + " remaining participants...");
-            distributeRemaining(new ArrayList<>(remainingPool), allTeams);
+        List<Participant> remaining = new ArrayList<>();
+        participantQueue.drainTo(remaining);
+
+        if (!remaining.isEmpty() && !allTeams.isEmpty()) {
+            System.out.println("📝 Distributing " + remaining.size() + " remaining participants...");
+            distributeRemaining(remaining, allTeams);
         }
 
         return allTeams;
+    }
+
+    /**
+     * ✅ NEW METHOD: Form team from queue (no race conditions)
+     */
+    private Team formSingleTeamFromQueue(BlockingQueue<Participant> queue, String teamId) {
+        Team team = new Team(teamId, teamSize);
+        List<Participant> selectedMembers = new ArrayList<>();
+
+        try {
+            // PHASE 1: Try to get a Leader
+            Participant leader = pollMatching(queue, p ->
+                    p.getPersonalityType() == PersonalityType.LEADER, 100);
+
+            if (leader != null) {
+                team.addMember(leader);
+                selectedMembers.add(leader);
+            }
+
+            // PHASE 2: Get 1-2 Thinkers
+            int thinkersNeeded = teamSize > 5 ? 2 : 1;
+            for (int i = 0; i < thinkersNeeded && team.getCurrentSize() < teamSize; i++) {
+                Participant thinker = pollMatching(queue, p ->
+                        p.getPersonalityType() == PersonalityType.THINKER &&
+                                canAddToTeam(team, p), 100);
+
+                if (thinker != null) {
+                    team.addMember(thinker);
+                    selectedMembers.add(thinker);
+                }
+            }
+
+            // PHASE 3: Fill remaining slots with best fit
+            while (team.getCurrentSize() < teamSize) {
+                Participant best = pollBestFit(queue, team, 100);
+
+                if (best == null) {
+                    // Fallback: take any valid participant
+                    best = pollMatching(queue, p -> canAddToTeam(team, p), 100);
+                }
+
+                if (best == null) {
+                    // Can't complete this team
+                    System.err.println("⚠ " + teamId + " incomplete (" + team.getCurrentSize() + "/" + teamSize + ")");
+
+                    // Return participants to queue
+                    for (Participant member : selectedMembers) {
+                        queue.offer(member);
+                    }
+                    return null;
+                }
+
+                team.addMember(best);
+                selectedMembers.add(best);
+            }
+
+            System.out.println("✓ " + teamId + " formed successfully");
+            return team;
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("⚠ " + teamId + " formation interrupted");
+
+            // Return participants to queue
+            for (Participant member : selectedMembers) {
+                queue.offer(member);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Poll queue for participant matching condition (thread-safe)
+     */
+    private Participant pollMatching(BlockingQueue<Participant> queue,
+                                     java.util.function.Predicate<Participant> condition,
+                                     long timeoutMs) throws InterruptedException {
+        List<Participant> checked = new ArrayList<>();
+        long startTime = System.currentTimeMillis();
+
+        try {
+            while (System.currentTimeMillis() - startTime < timeoutMs) {
+                Participant p = queue.poll(10, TimeUnit.MILLISECONDS);
+                if (p == null) break;
+
+                if (condition.test(p)) {
+                    return p;
+                }
+
+                checked.add(p);
+            }
+            return null;
+        } finally {
+            // Return non-matching participants to queue
+            for (Participant p : checked) {
+                queue.offer(p);
+            }
+        }
+    }
+
+    /**
+     * Poll queue for best fitting participant (thread-safe)
+     */
+    private Participant pollBestFit(BlockingQueue<Participant> queue,
+                                    Team team,
+                                    long timeoutMs) throws InterruptedException {
+        List<Participant> candidates = new ArrayList<>();
+        long startTime = System.currentTimeMillis();
+
+        // Collect candidates
+        while (System.currentTimeMillis() - startTime < timeoutMs && candidates.size() < 10) {
+            Participant p = queue.poll(10, TimeUnit.MILLISECONDS);
+            if (p == null) break;
+
+            if (canAddToTeam(team, p)) {
+                candidates.add(p);
+            }
+        }
+
+        if (candidates.isEmpty()) return null;
+
+        // Find best fit
+        Participant best = candidates.stream()
+                .max(Comparator.comparingDouble(p -> calculateFitScore(team, p)))
+                .orElse(null);
+
+        // Return others to queue
+        for (Participant p : candidates) {
+            if (p != best) {
+                queue.offer(p);
+            }
+        }
+
+        return best;
     }
 
     /**
