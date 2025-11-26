@@ -30,15 +30,15 @@ public class PersonalityClassifier {
     }
 
     // Determine personality type based on scoring rules
-    public String classifyPersonality(int scaledScore) {
+    public PersonalityType classifyPersonality(int scaledScore) {
         if (scaledScore >= 90 && scaledScore <= 100) {
-            return "Leader";
+            return PersonalityType.LEADER;
         } else if (scaledScore >= 70 && scaledScore <= 89) {
-            return "Balanced";
+            return PersonalityType.BALANCED;
         } else if (scaledScore >= 50 && scaledScore <= 69) {
-            return "Thinker";
+            return PersonalityType.THINKER;
         } else if (scaledScore >= 20 && scaledScore <= 49) {
-            return "Normal";
+            return PersonalityType.ANALYST;
         } else {
             throw new IllegalArgumentException("Invalid personality score");
         }
@@ -48,17 +48,17 @@ public class PersonalityClassifier {
         int[] responses = p.getResponses();
 
         if (!validateResponses(responses)) {
-            p.setPersonality_type("Invalid");
-            p.setPersonality_score(0);
+//            p.setPersonalityType("Invalid");
+            p.setPersonalityScore(0);
             return;
         }
 
         int total = computeTotalScore(responses);
         int scaled = computeScaledScore(total);
-        String type = classifyPersonality(scaled);
+        PersonalityType type = classifyPersonality(scaled);
 
-        p.setPersonality_score(scaled);
-        p.setPersonality_type(type);
+        p.setPersonalityScore(scaled);
+        p.setPersonalityType(type);
     }
 
 

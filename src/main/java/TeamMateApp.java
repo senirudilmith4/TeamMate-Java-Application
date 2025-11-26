@@ -30,7 +30,7 @@ public class TeamMateApp {
                    appController.viewParticipants();
                     break;
                 case 4:
-                 //   formTeams();
+                    appController.formTeams();
                     break;
                 case 5:
                  //   viewTeams();
@@ -74,7 +74,7 @@ public class TeamMateApp {
         System.out.println("│  7. Exit                                │");
         System.out.println("└─────────────────────────────────────────┘");
         System.out.printf("  [Loaded: %d participants, %d teams]\n",
-                participants.size(), formedTeams.size());
+                AppController.participants.size(), formedTeams.size());
     }
 
     private static int getIntInput(String prompt, int min, int max) {

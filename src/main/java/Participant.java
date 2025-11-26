@@ -1,30 +1,30 @@
 public class Participant {
     private String id;
     private String name;
-    private String preferred_sport;
-    private String preferred_role;
-    private int skill_level;
-    private  int personality_score;
-    private  String personality_type;
+    private String preferredSport;
+    private Role preferredRole;
+    private int skillLevel;
+    private  int personalityScore;
+    private  PersonalityType personalityType;
     private int[] responses;
 
     // parameterized constructor
-    public Participant(String id,String name,String preferred_sport,String preferred_role,int skill_level,int personality_score,String personality_type) {
+    public Participant(String id,String name,String preferredSport,Role preferredRole,int skillLevel,int personalityScore) {
         this.id = id;
         this.name = name;
-        this.preferred_sport = preferred_sport;
-        this.preferred_role = preferred_role;
-        //this.skill_level = skill_level;
-        this.personality_score = 0;
-        this.personality_type = "pending";
+        this.preferredSport = preferredSport;
+        this.preferredRole = preferredRole;
+        this.skillLevel = skillLevel;
+        this.personalityScore = personalityScore;
+
     }
 
     // default constructor
     public Participant(){
         this.id = "P001";
         this.name = "Unknown";
-        this.preferred_sport = "Unknown";
-        this.skill_level = 0;
+        this.preferredSport = "Unknown";
+        this.skillLevel = 0;
     }
 
     public int[] getResponses() {
@@ -39,23 +39,23 @@ public class Participant {
     public String getName() {
         return name;
     }
-    public String getPreferred_sport() {
-        return preferred_sport;
+    public String getPreferredSport() {
+        return preferredSport;
     }
-    public int getSkill_level() {
-        return skill_level;
+    public int getSkillLevel() {
+        return skillLevel;
     }
-    public int getPersonality_score() {
-        return personality_score;
+    public int getPersonalityScore() {
+        return personalityScore;
     }
-    public String getPersonality_type() {
-        return personality_type;
+    public PersonalityType getPersonalityType() {
+        return personalityType;
     }
-    public String getPreferred_role(){
-        return preferred_role;
+    public Role getPreferredRole(){
+        return preferredRole;
     }
-    public void setPreferred_role(String preferred_role) {
-        this.preferred_role = preferred_role;
+    public void setPreferredRole(Role preferredRole) {
+        this.preferredRole = preferredRole;
     }
     public void setParticipantId(String participantId) {
         this.id = participantId;
@@ -67,36 +67,38 @@ public class Participant {
         }
         this.name = name;
     }
-    public void setPreferred_sport(String preferred_sport) {
-        if (preferred_sport == null||preferred_sport.trim().isEmpty()){
+    public void setPreferredSport(String preferredSport) {
+        if (preferredSport == null||preferredSport.trim().isEmpty()){
             throw new IllegalArgumentException("Preferred sport cannot be empty");
         }
-        this.preferred_sport = preferred_sport;
+        this.preferredSport = preferredSport;
     }
-//    public void setSkill_level(int[] skill_level) {
-//        if (skill_level < 0||skill_level > 5){
-//            throw new IllegalArgumentException("Skill level must be between 0 and 5");
-//        }
-//        this.skill_level = skill_level;
-//    }
-    public void setPersonality_score(int personality_score) {
-        this.personality_score=personality_score;
+        public void setSkillLevel(int skillLevel) {
+        if (skillLevel < 0||skillLevel > 5){
+            throw new IllegalArgumentException("Skill level must be between 0 and 5");
+        }
+        this.skillLevel = skillLevel;
     }
-     public void setPersonality_type(String personality_type) {
-        this.personality_type=personality_type;
-     }
+    public void setPersonalityScore(int personalityScore) {
+        this.personalityScore=personalityScore;
+    }
+    public void setPersonalityType(PersonalityType personalityType) {
+        this.personalityType=personalityType;
+    }
 
     @Override
     public String toString() {
         return "Participant{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", sport='" + preferred_sport + '\'' +
-                ", role='" +preferred_role + '\''+
-                ", skill=" + skill_level + '\''+
-                ", personality=" + personality_score + " (" + personality_type + ")" +
+                ", sport='" + preferredSport + '\'' +
+                ", role='" +preferredRole + '\''+
+                ", skill=" + skillLevel + '\''+
+                ", personality=" + personalityScore + " (" + personalityType + ")" +
                 '}';
     }
+
+
 
 
 }

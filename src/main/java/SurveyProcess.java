@@ -12,11 +12,23 @@ public class SurveyProcess {
         System.out.print("Enter Preferred Sport: ");
         String sport = scanner.nextLine();
 
-        System.out.print("Enter Preferred Role: ");
-        String role = scanner.nextLine();
+        System.out.print("Enter Preferred Role (Strategist,\n" +
+                "        Attacker,\n" +
+                "        Defender,\n" +
+                "        Supporter,\n" +
+                "        Coordinator): ");
+        Role role = null;
+        while (role == null) {
+            String input = scanner.nextLine().trim();
+            try {
+                role = Role.valueOf(input);
+            } catch (IllegalArgumentException e) {
+                System.out.print("Invalid role! Please enter LEADER, THINKER, or BALANCED: ");
+            }
+        }
 
-        System.out.print("Enter Skill Level (1-10): ");
-        int skillLevel = readNumberInRange(1, 10);
+        System.out.print("Enter Skill Level (1-5): ");
+        int skillLevel = readNumberInRange(1, 5);
 
         // Now ask 5 personality questions
         System.out.println("\n---- 5-Question Personality Survey ----");
@@ -31,9 +43,9 @@ public class SurveyProcess {
         // Create participant
         Participant p = new Participant();
         p.setName(name);
-        p.setPreferred_sport(sport);
-        p.setPreferred_role(role);
-        //p.setSkill_level(skillLevel);
+        p.setPreferredSport(sport);
+        p.setPreferredRole(role);
+        p.setSkillLevel(skillLevel);
         p.setResponses(responses);
 
         return p;

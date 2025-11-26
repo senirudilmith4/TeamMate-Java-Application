@@ -3,8 +3,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class
-Team {
+public class Team {
     private String id;
     private final List<Participant> members;
     private final int maxMembers;   // teams cannot be changed after formation
@@ -41,11 +40,11 @@ Team {
 //        return null;
 //    }
 
-    public Map<String, Integer> getPersonalityDistribution() {
-        Map<String, Integer> map = new HashMap<>();
+    public Map<PersonalityType, Integer> getPersonalityDistribution() {
+        Map<PersonalityType, Integer> map = new HashMap<>();
         for (Participant p : members) {
-            String personality_type = p.getPersonality_type();
-            map.put(personality_type,map.getOrDefault(personality_type,0) + 1);
+            PersonalityType personalityType = p.getPersonalityType();
+            map.put(personalityType,map.getOrDefault(personalityType,0) + 1);
         }
         return map;
     }
@@ -53,11 +52,41 @@ Team {
     public double getAverageSkill() {
         if (members.isEmpty()) return 0;
         return members.stream()
-                .mapToInt(Participant::getSkill_level)
+                .mapToInt(Participant::getSkillLevel)
                 .average().orElse(0);
     }
 
     public String getTeamInfo() {
         return "";
     }
+
+    public int getCurrentSize() {
+        return members.size();
+    }
+
+    public long countPersonalityType(PersonalityType personalityType) {
+        if (personalityType == null) return 0;
+        return members.stream()
+                .filter(p -> p.getPersonalityType() != null &&
+                        p.getPersonalityType()==personalityType)
+                .count();
+    }
+
+    public long countGame(String gameName) {
+        if (gameName == null) return 0;
+        return members.stream()
+                .filter(p -> p.getPreferredSport() != null &&
+                        p.getPreferredSport().equalsIgnoreCase(gameName))
+                .count();
+    }
+
+    public boolean hasRole(Role role) {
+        if (members == null || members.isEmpty()) return false;
+
+        for (Participant p : members) {
+            if (p.getPreferredRole() == role) return true;
+        }
+        return false;
+    }
+
 }
