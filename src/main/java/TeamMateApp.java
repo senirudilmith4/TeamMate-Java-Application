@@ -61,13 +61,14 @@ public class TeamMateApp {
                 "║       Intelligent Team Formation System              ║\n" +
                 "║       University Gaming Club Edition                 ║\n" +
                 "╚══════════════════════════════════════════════════════╝\n");
+
     }
 
     private static void printMenu() {
         System.out.println("\n┌─────────────── MAIN MENU ───────────────┐");
-        System.out.println("│  1. Load participants from CSV          │");
-        System.out.println("│  2. Generate sample data                │");
-        System.out.println("│  3. View participants                   │");
+        System.out.println("│  1. Add Participant                     │");
+        System.out.println("│  2. View added participants             │");
+        System.out.println("│  3. Load participants from CSV          │");
         System.out.println("│  4. Form teams                          │");
         System.out.println("│  5. View formed teams                   │");
         System.out.println("│  6. Save results to file                │");

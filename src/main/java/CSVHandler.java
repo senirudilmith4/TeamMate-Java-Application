@@ -31,7 +31,7 @@ public class CSVHandler {
 
             // write header only if file didn't exist
             if (!fileExists) {
-                writer.write("id,name,preferredSport,preferredRole,skillLevel,personalityScore,personalityType\n");
+                writer.write("id,name,email,preferredSport,skillLevel,preferredRole,personalityScore,personalityType\n");
             }
 
             writer.write(formatParticipant(p) + "\n");
@@ -47,14 +47,15 @@ public class CSVHandler {
     private String formatParticipant(Participant p) {
         return p.getParticipantId() + "," +
                 p.getName() + "," +
+                p.getEmail() + "," +
                 p.getPreferredSport() + "," +
-                p.getPreferredRole() + "," +
                 p.getSkillLevel() + "," +
+                p.getPreferredRole() + "," +
                 p.getPersonalityScore() + "," +
                 p.getPersonalityType();
     }
 
-    public List<Participant> loadParticipants() {
+    public List<Participant> loadParticipants(String filePath) {
         List<Participant> participants = new ArrayList<>();
 
         File file = new File(filePath);
@@ -79,7 +80,7 @@ public class CSVHandler {
                 String[] data = line.split(",");
 
                 // must match your CSV format
-                if (data.length != 7) {
+                if (data.length != 8) {
                     System.out.println("⚠ Skipping invalid CSV row: " + line);
                     continue;
                 }
@@ -88,23 +89,24 @@ public class CSVHandler {
 
                 p.setParticipantId(data[0]);          // id
                 p.setName(data[1]);                   // name
-                p.setPreferredSport(data[2]);         // sport
+                p.setEmail(data[2]);                  // email
+                p.setPreferredSport(data[3]);         // sport
 
                 // Convert preferredRole (String → Enum Role)
                 try {
-                    Role role = Role.valueOf(data[3].toUpperCase());
+                    Role role = Role.valueOf(data[5].toUpperCase());
                     p.setPreferredRole(role);
                 } catch (Exception e) {
-                    System.out.println("⚠ Invalid role in CSV: " + data[3]);
+                    System.out.println("⚠ Invalid role in CSV: " + data[5]);
                     continue;
                 }
 
                 p.setSkillLevel(Integer.parseInt(data[4])); // skill level
-                p.setPersonalityScore(Integer.parseInt(data[5])); // personality score
+                p.setPersonalityScore(Integer.parseInt(data[6])); // personality score
 
                 // Convert personalityType (String → Enum PersonalityType)
                 try {
-                    PersonalityType pt = PersonalityType.valueOf(data[6].toUpperCase());
+                    PersonalityType pt = PersonalityType.valueOf(data[7].toUpperCase());
                     p.setPersonalityType(pt);
                 } catch (Exception e) {
                     System.out.println("⚠ Invalid personality type in CSV: " + data[6]);

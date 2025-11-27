@@ -1,6 +1,7 @@
 public class Participant {
     private String id;
     private String name;
+    private String email;
     private String preferredSport;
     private Role preferredRole;
     private int skillLevel;
@@ -12,6 +13,7 @@ public class Participant {
     public Participant(String id,String name,String preferredSport,Role preferredRole,int skillLevel,int personalityScore) {
         this.id = id;
         this.name = name;
+
         this.preferredSport = preferredSport;
         this.preferredRole = preferredRole;
         this.skillLevel = skillLevel;
@@ -30,6 +32,10 @@ public class Participant {
     public String getId() {
         return id;
     }
+    public String getEmail() {
+        return email;
+    }
+
     public int[] getResponses() {
         return responses;
     }
@@ -63,7 +69,9 @@ public class Participant {
     public void setParticipantId(String participantId) {
         this.id = participantId;
     }
-
+    public void setEmail(String email) {
+        this.email = email;
+    }
     public void setName(String name) {
         if (name == null||name.trim().isEmpty()){
             throw new IllegalArgumentException("Name cannot be empty");
@@ -77,8 +85,8 @@ public class Participant {
         this.preferredSport = preferredSport;
     }
         public void setSkillLevel(int skillLevel) {
-        if (skillLevel < 0||skillLevel > 5){
-            throw new IllegalArgumentException("Skill level must be between 0 and 5");
+        if (skillLevel < 0||skillLevel > 10){
+            throw new IllegalArgumentException("Skill level must be between 0 and 10");
         }
         this.skillLevel = skillLevel;
     }
@@ -100,7 +108,6 @@ public class Participant {
                 ", personality=" + personalityScore + " (" + personalityType + ")" +
                 '}';
     }
-
 
 
 
