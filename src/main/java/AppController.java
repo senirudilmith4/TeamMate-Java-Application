@@ -20,22 +20,28 @@ public class AppController {
         System.out.println("Participants loaded: " + participants.size()); }
 
 
-    public void completeSurvey(){
-        Participant p = survey.conductSurvey(); // conducts survey
-        classifier.classifyParticipant(p);  // classify personality
-        participants.add(p); // store participant
-        csvHandler.appendParticipant(p);
+    public void completeSurvey() {
+        try {
+            Participant p = survey.conductSurvey(); // conducts survey
+            classifier.classifyParticipant(p);      // classify personality
+            participants.add(p);                     // store participant
+            csvHandler.appendParticipant(p);         // save to CSV
 
+            System.out.println("Survey completed successfully for: " + p.getName());
 
-        // generate ID if needed
-       // p.setId(UUID.randomUUID().toString());
+        } catch (SurveyException e) {
+            System.err.println("Survey failed: " + e.getMessage());
+            // Log the error or take appropriate action
+        } catch (Exception e) {
+            System.err.println("Unexpected error during survey: " + e.getMessage());
+            e.printStackTrace();
+        }
 
-
-        System.out.println("✅ Participant added successfully!");
-        System.out.println("   Name: " + p.getName());
-        System.out.println("   Personality: " + p.getPersonalityType());
-        System.out.println("   Total participants: " + participants.size());
-        System.out.println("Participant added successfully!");
+//        System.out.println("✅ Participant added successfully!");
+//        System.out.println("   Name: " + p.getName());
+//        System.out.println("   Personality: " + p.getPersonalityType());
+//        System.out.println("   Total participants: " + participants.size());
+//        System.out.println("Participant added successfully!");
     }
 
     public void viewParticipants() {

@@ -137,11 +137,12 @@ public class CSVHandler {
                 for (Participant p : team.getMembers()) {
                     pw.printf("%s,%s,%s,%s,%s,%d,%s%n",
                             team.getID(),
-                            p.getId(),
-                            p.getName(),
-                            p.getPreferredRole(),
-                            p.getPreferredSport(),
-                            p.getSkillLevel(),
+                            p.getName() ,
+                            p.getEmail() ,
+                            p.getPreferredSport() ,
+                            p.getSkillLevel() ,
+                            p.getPreferredRole() ,
+                            p.getPersonalityScore(),
                             p.getPersonalityType()
                     );
                 }
