@@ -135,7 +135,7 @@ public class CSVHandler {
             // Write each team's members
             for (Team team : teams) {
                 for (Participant p : team.getMembers()) {
-                    pw.printf("%s,%s,%s,%s,%s,%d,%s%n",
+                    pw.printf("%s,%s,%s,%s,%d,%s,%d,%s%n",
                             team.getID(),
                             p.getName() ,
                             p.getEmail() ,
