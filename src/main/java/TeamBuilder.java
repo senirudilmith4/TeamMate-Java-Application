@@ -38,165 +38,327 @@ public class TeamBuilder {
      * Build teams from participants using CONCURRENT processing.
      * This is the main method that uses threads to form teams in parallel.
      */
+//    public List<Team> buildTeamsWithConcurrency(List<Participant> participants)
+//            throws InterruptedException, ExecutionException {
+//        logger.log("INFO", "Starting concurrent team building with " + participants.size() + " participants");
+//        if (participants == null || participants.isEmpty()) {
+//            throw new IllegalArgumentException("Participant list cannot be empty");
+//        }
+//
+//        int availableProcessors = Runtime.getRuntime().availableProcessors();
+//
+//
+//        // Pre-sort participants for better distribution
+///      AtomicInteger teamCounter = new AtomicInteger(1);
+//
+//        // Create thread pool
+//        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+//        List<Team> allTeams = Collections.synchronizedList(new ArrayList<>());
+//
+//
+//        // Submit exactly the number of teams we can form
+//        List<Future<Team>> futures = new ArrayList<>();
+//
+//        for (int i = 0; i < numTeams; i++) {
+//            Future<Team> future = executor.submit(() -> {
+//                return formSingleTeamFromQueue(participantQueue,
+//                        "Team-" + teamCounter.getAndIncrement());
+//            });
+//            futures.add(future);
+//
+//        }
+//
+//        // Collect all formed teams
+//        int successfulTeams = 0;
+//        int failedTeams = 0;
+//        for (Future<Team> future : futures) {
+//            try {
+//                Team team = future.get();
+//                if (team != null && team.getCurrentSize() > 0) {
+//                    allTeams.add(team);
+//                    successfulTeams++;
+//                }else {
+//                    failedTeams++;
+//                }
+//            } catch (Exception e) {
+//                failedTeams++;
+//                logger.log("ERROR", "Thread execution failed: " + e.getMessage());
+//                System.err.println("⚠ Thread error: " + e.getMessage());
+//                e.printStackTrace();
+//            }
+//        }
+//        logger.log("INFO", String.format("Team formation complete: %d successful, %d failed",
+//                successfulTeams, failedTeams));
+//        executor.shutdown();
+//        executor.awaitTermination(30, TimeUnit.SECONDS);
+//        logger.log("INFO", "Thread pool shutdown complete");
+//
+//        // Handle remaining participants
+//        List<Participant> remaining = new ArrayList<>();
+//        participantQueue.drainTo(remaining);
+//
+//        if (!remaining.isEmpty() && !allTeams.isEmpty()) {
+//            logger.log("INFO", "Distributing " + remaining.size() + " remaining participants");
+//            System.out.println("📝 Distributing " + remaining.size() + " remaining participants...");
+//            distributeRemaining(remaining, allTeams);
+//        }
+//        logger.log("INFO", "Concurrent team building finished: " + allTeams.size() + " teams created");
+//        return allTeams;
+//    }
     public List<Team> buildTeamsWithConcurrency(List<Participant> participants)
             throws InterruptedException, ExecutionException {
+
         logger.log("INFO", "Starting concurrent team building with " + participants.size() + " participants");
+
         if (participants == null || participants.isEmpty()) {
             throw new IllegalArgumentException("Participant list cannot be empty");
         }
 
-        int availableProcessors = Runtime.getRuntime().availableProcessors();
-        int numTeams = participants.size() / teamSize;
-
-        // Determine optimal thread count
-        int numThreads = Math.min(availableProcessors, Math.max(1, numTeams / 2));
-        logger.log("INFO", "Using " + numThreads + " threads for concurrent team formation.");
-
-
-        System.out.println("🔧 Using " + numThreads + " threads for team formation...");
-
-        // Pre-sort participants for better distribution
+        // Pre-sort by personality (leaders first)
         List<Participant> sortedPool = preprocessParticipants(participants);
         logger.log("INFO", "Participants preprocessed and sorted by personality type");
-        // ✅ FIX: Use BlockingQueue for thread-safe participant access
-        BlockingQueue<Participant> participantQueue = new LinkedBlockingQueue<>(sortedPool);
 
-        // ✅ FIX: Thread-safe counter
-        AtomicInteger teamCounter = new AtomicInteger(1);
+        // ===========================
+        // 1️⃣ Personality-Based Queues
+        // ===========================
+        Map<PersonalityType, BlockingQueue<Participant>> personalityQueues = new HashMap<>();
+        personalityQueues.put(PersonalityType.LEADER,   new LinkedBlockingQueue<>());
+        personalityQueues.put(PersonalityType.THINKER,  new LinkedBlockingQueue<>());
+        personalityQueues.put(PersonalityType.BALANCED, new LinkedBlockingQueue<>());
 
-        // Create thread pool
-        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-        List<Team> allTeams = Collections.synchronizedList(new ArrayList<>());
-
-        // ✅ FIX: Calculate team count ONCE before submitting tasks
-        int maxPossibleTeams = sortedPool.size() / teamSize;
-        logger.log("INFO", "Max possible teams to form: " + maxPossibleTeams);
-
-        // Submit exactly the number of teams we can form
-        List<Future<Team>> futures = new ArrayList<>();
-        for (int i = 0; i < maxPossibleTeams; i++) {
-            Future<Team> future = executor.submit(() -> {
-                return formSingleTeamFromQueue(participantQueue,
-                        "Team-" + teamCounter.getAndIncrement());
-            });
-            futures.add(future);
-
+        // Fill queues
+        for (Participant p : sortedPool) {
+            personalityQueues.get(p.getPersonalityType()).offer(p);
         }
 
-        // Collect all formed teams
-        int successfulTeams = 0;
-        int failedTeams = 0;
-        for (Future<Team> future : futures) {
+        int totalLeaders = personalityQueues.get(PersonalityType.LEADER).size();
+        int maxPossibleTeams = Math.min(sortedPool.size() / teamSize, totalLeaders);
+
+        logger.log("INFO", "Leaders available: " + totalLeaders);
+        logger.log("INFO", "Max possible teams (based on leader constraint): " + maxPossibleTeams);
+
+
+        // ===========================
+        // 2️⃣ Thread Setup
+        // ===========================
+        int availableProcessors = Runtime.getRuntime().availableProcessors();
+        int numThreads = Math.min(availableProcessors, Math.max(1, maxPossibleTeams / 2));
+
+        logger.log("INFO", "Using " + numThreads + " threads for concurrent team formation");
+        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+
+        AtomicInteger teamCounter = new AtomicInteger(1);
+        List<Future<Team>> futures = new ArrayList<>();
+        List<Team> allTeams = Collections.synchronizedList(new ArrayList<>());
+
+
+        // ===========================
+        // 3️⃣ Submit Team Builders
+        // ===========================
+        for (int i = 0; i < maxPossibleTeams; i++) {
+            Future<Team> f = executor.submit(() ->
+                    formSingleTeamFromQueues(
+                            personalityQueues,
+                            "Team-" + teamCounter.getAndIncrement()
+                    )
+            );
+            futures.add(f);
+        }
+
+
+        // ===========================
+        // 4️⃣ Collect Built Teams
+        // ===========================
+        int successful = 0, failed = 0;
+
+        for (Future<Team> f : futures) {
             try {
-                Team team = future.get();
-                if (team != null && team.getCurrentSize() > 0) {
-                    allTeams.add(team);
-                    successfulTeams++;
-                }else {
-                    failedTeams++;
+                Team t = f.get();
+                if (t != null && t.getCurrentSize() > 0) {
+                    allTeams.add(t);
+                    successful++;
+                } else {
+                    failed++;
                 }
+
             } catch (Exception e) {
-                failedTeams++;
-                logger.log("ERROR", "Thread execution failed: " + e.getMessage());
-                System.err.println("⚠ Thread error: " + e.getMessage());
+                failed++;
+                logger.log("ERROR", "Team creation failed: " + e.getMessage());
                 e.printStackTrace();
             }
         }
-        logger.log("INFO", String.format("Team formation complete: %d successful, %d failed",
-                successfulTeams, failedTeams));
+
+        logger.log("INFO", "Team building summary: " + successful + " successful, " + failed + " failed");
+
         executor.shutdown();
         executor.awaitTermination(30, TimeUnit.SECONDS);
-        logger.log("INFO", "Thread pool shutdown complete");
 
-        // Handle remaining participants
+
+        // ===========================
+        // 5️⃣ Distribute Remaining Participants
+        // ===========================
         List<Participant> remaining = new ArrayList<>();
-        participantQueue.drainTo(remaining);
+        personalityQueues.values().forEach(q -> q.drainTo(remaining));
 
         if (!remaining.isEmpty() && !allTeams.isEmpty()) {
             logger.log("INFO", "Distributing " + remaining.size() + " remaining participants");
-            System.out.println("📝 Distributing " + remaining.size() + " remaining participants...");
             distributeRemaining(remaining, allTeams);
+            System.out.println("📝 Distributing " + remaining.size() + " remaining participants...");
         }
-        logger.log("INFO", "Concurrent team building finished: " + allTeams.size() + " teams created");
+
+        logger.log("INFO", "Concurrent team building finished with " + allTeams.size() + " final teams");
         return allTeams;
     }
 
     /**
      * ✅ NEW METHOD: Form team from queue (no race conditions)
      */
-    private Team formSingleTeamFromQueue(BlockingQueue<Participant> queue, String teamId) {
-        logger.log("INFO", "Thread starting formation of " + teamId);
+//    private Team formSingleTeamFromQueue(BlockingQueue<Participant> queue, String teamId) {
+//        logger.log("INFO", "Thread starting formation of " + teamId);
+//        Team team = new Team(teamId, teamSize);
+//        List<Participant> selectedMembers = new ArrayList<>();
+//
+//        try {
+//            // PHASE 1: Try to get a Leader
+//            Participant leader = pollMatching(queue, p ->
+//                    p.getPersonalityType() == PersonalityType.LEADER, 500);
+//
+//            if (leader != null) {
+//                team.addMember(leader);
+//                selectedMembers.add(leader);
+//            }else {
+//                logger.log("WARN", teamId + ": No leader found");
+//            }
+//
+//            // PHASE 2: Get 1-2 Thinkers
+//            int thinkersNeeded = teamSize > 5 ? 2 : 1;
+//            int thinkersAdded = 0;
+//            for (int i = 0; i < thinkersNeeded && team.getCurrentSize() < teamSize; i++) {
+//                Participant thinker = pollMatching(queue, p ->
+//                        p.getPersonalityType() == PersonalityType.THINKER &&
+//                                canAddToTeam(team, p), 500);
+//
+//                if (thinker != null) {
+//                    team.addMember(thinker);
+//                    selectedMembers.add(thinker);
+//                    thinkersAdded++;
+//                }
+//            }
+//            logger.log("INFO", teamId + ": Added " + thinkersAdded + "/" + thinkersNeeded + " thinkers");
+//            // PHASE 3: Fill remaining slots with best fit
+//            int fillCount = 0;
+//            while (team.getCurrentSize() < teamSize) {
+//                Participant best = pollBestFit(queue, team, 500);
+//
+//                if (best == null) {
+//                    // Fallback: take any valid participant
+//                    best = pollMatching(queue, p -> canAddToTeam(team, p), 500);
+//                }
+//
+//                if (best == null) {
+//                    // Can't complete this team
+//                    logger.log("WARN", teamId + " incomplete (" + team.getCurrentSize() +
+//                            "/" + teamSize + ") - returning " + selectedMembers.size() + " members to queue");
+//                    System.err.println("⚠ " + teamId + " incomplete (" + team.getCurrentSize() + "/" + teamSize + ")");
+//
+//
+//                    // Return participants to queue
+//                    for (Participant member : selectedMembers) {
+//                        queue.offer(member);
+//                    }
+//                    return null;
+//                }
+//
+//                team.addMember(best);
+//                selectedMembers.add(best);
+//                fillCount++;
+//            }
+//            logger.log("INFO", teamId + ": Filled " + fillCount + " remaining slots - team complete");
+//            System.out.println("✓ " + teamId + " formed successfully");
+//            return team;
+//
+//        } catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//            logger.log("ERROR", teamId + " formation interrupted");
+//            System.err.println("⚠ " + teamId + " formation interrupted");
+//
+//            // Return participants to queue
+//            for (Participant member : selectedMembers) {
+//                queue.offer(member);
+//            }
+//            return null;
+//        }
+//  }
+    private Team formSingleTeamFromQueues(
+            Map<PersonalityType, BlockingQueue<Participant>> queues,
+            String teamId) {
+
+        logger.log("INFO", "Thread forming " + teamId);
+
         Team team = new Team(teamId, teamSize);
-        List<Participant> selectedMembers = new ArrayList<>();
+        List<Participant> selected = new ArrayList<>();
+
+        BlockingQueue<Participant> leaders   = queues.get(PersonalityType.LEADER);
+        BlockingQueue<Participant> thinkers  = queues.get(PersonalityType.THINKER);
+        BlockingQueue<Participant> balanced  = queues.get(PersonalityType.BALANCED);
 
         try {
-            // PHASE 1: Try to get a Leader
-            Participant leader = pollMatching(queue, p ->
-                    p.getPersonalityType() == PersonalityType.LEADER, 500);
-
-            if (leader != null) {
-                team.addMember(leader);
-                selectedMembers.add(leader);
-            }else {
-                logger.log("WARN", teamId + ": No leader found");
+            // 1️⃣ Always get a Leader
+            Participant leader = leaders.poll(500, TimeUnit.MILLISECONDS);
+            if (leader == null) {
+                logger.log("WARN", teamId + ": No leader available, aborting team");
+                return null;
             }
+            team.addMember(leader);
+            selected.add(leader);
 
-            // PHASE 2: Get 1-2 Thinkers
+            // 2️⃣ Add Thinkers (1–2)
             int thinkersNeeded = teamSize > 5 ? 2 : 1;
-            int thinkersAdded = 0;
-            for (int i = 0; i < thinkersNeeded && team.getCurrentSize() < teamSize; i++) {
-                Participant thinker = pollMatching(queue, p ->
-                        p.getPersonalityType() == PersonalityType.THINKER &&
-                                canAddToTeam(team, p), 500);
-
-                if (thinker != null) {
-                    team.addMember(thinker);
-                    selectedMembers.add(thinker);
-                    thinkersAdded++;
+            for (int i = 0; i < thinkersNeeded; i++) {
+                Participant t = thinkers.poll(300, TimeUnit.MILLISECONDS);
+                if (t != null && canAddToTeam(team, t)) {
+                    team.addMember(t);
+                    selected.add(t);
                 }
             }
-            logger.log("INFO", teamId + ": Added " + thinkersAdded + "/" + thinkersNeeded + " thinkers");
-            // PHASE 3: Fill remaining slots with best fit
-            int fillCount = 0;
-            while (team.getCurrentSize() < teamSize) {
-                Participant best = pollBestFit(queue, team, 500);
 
-                if (best == null) {
-                    // Fallback: take any valid participant
-                    best = pollMatching(queue, p -> canAddToTeam(team, p), 500);
+            // 3️⃣ Fill remaining slots
+            int attempts = 0;
+            int MAX_ATTEMPTS = balanced.size() * 2;
+
+            while (!team.isFull() && attempts < MAX_ATTEMPTS) {
+                attempts++;
+                Participant p = balanced.poll();
+                if (p == null) break;
+
+                if (canAddToTeam(team, p)) {
+                    team.addMember(p);
+                } else {
+                    balanced.offer(p);
                 }
 
-                if (best == null) {
-                    // Can't complete this team
-                    logger.log("WARN", teamId + " incomplete (" + team.getCurrentSize() +
-                            "/" + teamSize + ") - returning " + selectedMembers.size() + " members to queue");
-                    System.err.println("⚠ " + teamId + " incomplete (" + team.getCurrentSize() + "/" + teamSize + ")");
-                    System.err.println("⚠ " + teamId + " incomplete (" + team.getCurrentSize() + "/" + teamSize + ")");
 
-                    // Return participants to queue
-                    for (Participant member : selectedMembers) {
-                        queue.offer(member);
-                    }
-                    return null;
-                }
+        }
 
-                team.addMember(best);
-                selectedMembers.add(best);
-                fillCount++;
+            if (team.getCurrentSize() < teamSize) {
+                // Incomplete team → return members to queues
+                logger.log("WARN", teamId + " incomplete, returning members");
+                System.err.println("⚠ " + teamId + " incomplete (" + team.getCurrentSize() + "/" + teamSize + ")");
+                selected.forEach(p -> queues.get(p.getPersonalityType()).offer(p));
+                return null;
             }
-            logger.log("INFO", teamId + ": Filled " + fillCount + " remaining slots - team complete");
+
+            logger.log("INFO", teamId + " formed successfully");
             System.out.println("✓ " + teamId + " formed successfully");
             return team;
 
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        } catch (Exception e) {
             logger.log("ERROR", teamId + " formation interrupted");
             System.err.println("⚠ " + teamId + " formation interrupted");
 
-            // Return participants to queue
-            for (Participant member : selectedMembers) {
-                queue.offer(member);
-            }
+            // return all members
+            selected.forEach(p -> queues.get(p.getPersonalityType()).offer(p));
+
             return null;
         }
     }
@@ -214,7 +376,7 @@ public class TeamBuilder {
 
         try {
             while (System.currentTimeMillis() - startTime < timeoutMs) {
-                Participant p = queue.poll(10, TimeUnit.MILLISECONDS);
+                Participant p = queue.poll(3000, TimeUnit.MILLISECONDS);
                 if (p == null) break;
 
                 if (condition.test(p)) {
@@ -243,7 +405,7 @@ public class TeamBuilder {
 
         // Collect candidates
         while (System.currentTimeMillis() - startTime < timeoutMs && candidates.size() < 10) {
-            Participant p = queue.poll(10, TimeUnit.MILLISECONDS);
+            Participant p = queue.poll(100, TimeUnit.MILLISECONDS);
             if (p == null) break;
 
             if (canAddToTeam(team, p)) {
@@ -453,6 +615,8 @@ public class TeamBuilder {
     private boolean canAddToTeam(Team team, Participant p) {
         // Constraint 1: Game variety (max 2 from same game)
         if (team.countGame(p.getPreferredSport()) >= maxSameGame) {
+            logger.log("DEBUG", String.format("Reject %s for team %s: too many players from game %s",
+                    p.getName(), team.getID(), p.getPreferredSport()));
             return false;
         }
 
@@ -463,11 +627,13 @@ public class TeamBuilder {
 
         // Max 1 leader per team (strict)
         if (pt == PersonalityType.LEADER && leaderCount >= 1) {
+            logger.log("DEBUG", String.format("Reject %s for team %s: leader limit reached", p.getName(), team.getID()));
             return false;
         }
 
         // Max 2 thinkers per team
         if (pt == PersonalityType.THINKER && thinkerCount >= 2) {
+            logger.log("DEBUG", String.format("Reject %s for team %s: thinker limit reached", p.getName(), team.getID()));
             return false;
         }
 
