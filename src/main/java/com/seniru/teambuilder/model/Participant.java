@@ -1,3 +1,5 @@
+package com.seniru.teambuilder.model;
+
 public class Participant {
     private String id;
     private String name;
@@ -6,11 +8,11 @@ public class Participant {
     private Role preferredRole;
     private int skillLevel;
     private  int personalityScore;
-    private  PersonalityType personalityType;
+    private PersonalityType personalityType;
     private int[] responses;
 
     // parameterized constructor
-    public Participant(String id,String name,String preferredSport,Role preferredRole,int skillLevel,int personalityScore) {
+    public Participant(String id, String name, String preferredSport, Role preferredRole, int skillLevel, int personalityScore) {
         this.id = id;
         this.name = name;
 
@@ -99,7 +101,7 @@ public class Participant {
 
     @Override
     public String toString() {
-        return "Participant{" +
+        return "com.seniru.teambuilder.model.Participant{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", sport='" + preferredSport + '\'' +

@@ -1,5 +1,6 @@
+package com.seniru.teambuilder.model;
 
-    public enum Role {
+public enum Role {
         STRATEGIST,
         ATTACKER,
         DEFENDER,
