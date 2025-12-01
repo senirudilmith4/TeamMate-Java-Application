@@ -1,16 +1,28 @@
+package com.seniru.teambuilder.app;
+
+import com.seniru.teambuilder.model.Participant;
+import com.seniru.teambuilder.model.Team;
+import com.seniru.teambuilder.exception.SurveyException;
+import com.seniru.teambuilder.service.CSVHandler;
+import com.seniru.teambuilder.service.SurveyProcess;
+import com.seniru.teambuilder.service.PersonalityClassifier;
+import com.seniru.teambuilder.login.Organizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.ExecutionException;
 
 public class AppController {
-    static List<Participant> participants = new ArrayList<>();
+    private static List<Participant> participants = new ArrayList<>();
     private static List<Team> formedTeams = new ArrayList<>();
     private SurveyProcess survey = new SurveyProcess();
     private PersonalityClassifier classifier = new PersonalityClassifier();
     private CSVHandler csvHandler = new CSVHandler();
     Scanner scanner = new Scanner(System.in);
 
+
+    public List<Participant> getParticipants() {
+        return participants;
+    }
 
 
     public void loadAllParticipantsAtStart() {
@@ -37,11 +49,11 @@ public class AppController {
             e.printStackTrace();
         }
 
-//        System.out.println("✅ Participant added successfully!");
+//        System.out.println("✅ com.seniru.teambuilder.model.Participant added successfully!");
 //        System.out.println("   Name: " + p.getName());
 //        System.out.println("   Personality: " + p.getPersonalityType());
 //        System.out.println("   Total participants: " + participants.size());
-//        System.out.println("Participant added successfully!");
+//        System.out.println("com.seniru.teambuilder.model.Participant added successfully!");
     }
 
     public void viewParticipants() {

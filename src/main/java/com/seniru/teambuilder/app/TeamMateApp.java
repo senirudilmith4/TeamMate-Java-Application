@@ -1,7 +1,12 @@
+package com.seniru.teambuilder.app;
+
+import com.seniru.teambuilder.login.OrganizerLogin;
+import com.seniru.teambuilder.model.Team;
+
 import java.util.*;
 
 /**
- * TeamMate: Intelligent Team Formation System
+ * TeamMate: Intelligent com.seniru.teambuilder.model.Team Formation System
  * Main application class with console interface.
  */
 public class TeamMateApp {
@@ -135,7 +140,7 @@ public class TeamMateApp {
         System.out.println("│  6. Exit                                │");
         System.out.println("└─────────────────────────────────────────┘");
         System.out.printf("  [Loaded: %d participants, %d teams]\n",
-                AppController.participants.size(), formedTeams.size());
+                appController.getParticipants().size(), formedTeams.size());
     }
 
 
