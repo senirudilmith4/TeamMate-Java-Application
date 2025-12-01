@@ -1,3 +1,10 @@
+package com.seniru.teambuilder.service;
+
+import com.seniru.teambuilder.model.Participant;
+import com.seniru.teambuilder.model.PersonalityType;
+import com.seniru.teambuilder.model.Team;
+import com.seniru.teambuilder.util.TeamBuilderLogger;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,7 +78,7 @@ public class TeamBuilder {
         logger.log("INFO", "Max possible teams (based on leader constraint): " + maxPossibleTeams);
 
         // ===========================
-        // 2️⃣ PHASE 1: Strict Team Formation
+        // 2️⃣ PHASE 1: Strict com.seniru.teambuilder.model.Team Formation
         // ===========================
         System.out.println("\n=== PHASE 1: Forming teams with ALL constraints ===");
         logger.log("INFO", "=== PHASE 1: Strict team formation started ===");
@@ -86,7 +93,7 @@ public class TeamBuilder {
         List<Future<Team>> futures = new ArrayList<>();
         List<Team> allTeams = Collections.synchronizedList(new ArrayList<>());
 
-        // Submit Team Builders
+        // Submit com.seniru.teambuilder.model.Team Builders
         for (int i = 0; i < maxPossibleTeams; i++) {
             Future<Team> f = executor.submit(() ->
                     formSingleTeamFromQueues(
@@ -161,7 +168,7 @@ public class TeamBuilder {
                 logger.log("INFO", "User chose to form flexible teams");
 
                 // ===========================
-                // 5️⃣ PHASE 2: Flexible Team Formation
+                // 5️⃣ PHASE 2: Flexible com.seniru.teambuilder.model.Team Formation
                 // ===========================
                 System.out.println("\n=== PHASE 2: Forming teams with relaxed constraints ===");
                 logger.log("INFO", "=== PHASE 2: Flexible team formation started ===");
@@ -461,7 +468,7 @@ public class TeamBuilder {
     private double calculateFitScore(Team team, Participant p) {
         double score = 0;
 
-        // Role Diversity
+        // com.seniru.teambuilder.model.Role Diversity
         if (!team.hasRole(p.getPreferredRole())) {
             score += 30;
         } else {

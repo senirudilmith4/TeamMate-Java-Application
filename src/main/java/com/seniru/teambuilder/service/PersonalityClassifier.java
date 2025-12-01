@@ -1,3 +1,8 @@
+package com.seniru.teambuilder.service;
+
+import com.seniru.teambuilder.model.Participant;
+import com.seniru.teambuilder.model.PersonalityType;
+
 public class PersonalityClassifier {
 
   //Validate that the survey contains exactly 5 responses
@@ -62,21 +67,7 @@ public class PersonalityClassifier {
     }
 
 
-    // High-level method: validate → compute → classify → update participant
-//    public void processParticipant(Participant p, int[] responses) {
-//        if (!validateResponses(responses)) {
-//            p.setPersonality_type("Invalid");
-//            p.setPersonality_score(0);
-//            return;
-//        }
-//
-//        int total = computeTotalScore(responses);
-//        int scaled = computeScaledScore(total);
-//        String type = classifyPersonality(scaled);
-//
-//        p.setPersonality_score(scaled);
-//        p.setPersonality_type(type);
-//    }
+
 
 
 }

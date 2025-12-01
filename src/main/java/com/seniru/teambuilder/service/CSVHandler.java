@@ -1,3 +1,8 @@
+package com.seniru.teambuilder.service;
+
+import com.seniru.teambuilder.model.*;
+
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +48,7 @@ public class CSVHandler {
         }
     }
 
-    // Convert Participant → CSV line
+    // Convert com.seniru.teambuilder.model.Participant → CSV line
     private String formatParticipant(Participant p) {
         return p.getParticipantId() + "," +
                 p.getName() + "," +
@@ -92,7 +97,7 @@ public class CSVHandler {
                 p.setEmail(data[2]);                  // email
                 p.setPreferredSport(data[3]);         // sport
 
-                // Convert preferredRole (String → Enum Role)
+                // Convert preferredRole (String → Enum com.seniru.teambuilder.model.Role)
                 try {
                     Role role = Role.valueOf(data[5].toUpperCase());
                     p.setPreferredRole(role);
@@ -104,7 +109,7 @@ public class CSVHandler {
                 p.setSkillLevel(Integer.parseInt(data[4])); // skill level
                 p.setPersonalityScore(Integer.parseInt(data[6])); // personality score
 
-                // Convert personalityType (String → Enum PersonalityType)
+                // Convert personalityType (String → Enum com.seniru.teambuilder.model.PersonalityType)
                 try {
                     PersonalityType pt = PersonalityType.valueOf(data[7].toUpperCase());
                     p.setPersonalityType(pt);
@@ -130,7 +135,7 @@ public class CSVHandler {
         try (PrintWriter pw = new PrintWriter(new FileWriter(fileName))) {
 
             // Write header
-            pw.println("TeamID,ParticipantID,Name,Role,Sport,Skill,Personality");
+            pw.println("TeamID,ParticipantID,Name,com.seniru.teambuilder.model.Role,Sport,Skill,Personality");
 
             // Write each team's members
             for (Team team : teams) {
