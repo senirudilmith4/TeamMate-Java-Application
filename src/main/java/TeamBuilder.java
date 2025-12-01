@@ -13,7 +13,7 @@ public class TeamBuilder {
     private final int maxSameGame;        // Max players from same game per team
     private final int minRoles;           // Minimum role diversity required
     private final Random random;
-    private TeamBuilderLogger  logger = new TeamBuilderLogger("teamBuilder_log.txt");
+    private TeamBuilderLogger logger = new TeamBuilderLogger("teamBuilder_log.txt");
 
     // Constructor with defaults
     public TeamBuilder(int teamSize) {
@@ -35,10 +35,9 @@ public class TeamBuilder {
     }
 
     /**
-     * Build teams from participants using CONCURRENT processing.
+     * Build teams from participants using CONCURRENT processing with optional flexible phase.
      * This is the main method that uses threads to form teams in parallel.
      */
-
     public List<Team> buildTeamsWithConcurrency(List<Participant> participants)
             throws InterruptedException, ExecutionException {
 
@@ -71,10 +70,12 @@ public class TeamBuilder {
         logger.log("INFO", "Leaders available: " + totalLeaders);
         logger.log("INFO", "Max possible teams (based on leader constraint): " + maxPossibleTeams);
 
+        // ===========================
+        // 2️⃣ PHASE 1: Strict Team Formation
+        // ===========================
+        System.out.println("\n=== PHASE 1: Forming teams with ALL constraints ===");
+        logger.log("INFO", "=== PHASE 1: Strict team formation started ===");
 
-        // ===========================
-        // 2️⃣ Thread Setup
-        // ===========================
         int availableProcessors = Runtime.getRuntime().availableProcessors();
         int numThreads = Math.min(availableProcessors, Math.max(1, maxPossibleTeams / 2));
 
@@ -85,26 +86,20 @@ public class TeamBuilder {
         List<Future<Team>> futures = new ArrayList<>();
         List<Team> allTeams = Collections.synchronizedList(new ArrayList<>());
 
-
-        // ===========================
-        // 3️⃣ Submit Team Builders
-        // ===========================
+        // Submit Team Builders
         for (int i = 0; i < maxPossibleTeams; i++) {
             Future<Team> f = executor.submit(() ->
                     formSingleTeamFromQueues(
                             personalityQueues,
-                            "Team-" + teamCounter.getAndIncrement()
+                            "Team-" + teamCounter.getAndIncrement(),
+                            true  // Strict mode
                     )
             );
             futures.add(f);
         }
 
-
-        // ===========================
-        // 4️⃣ Collect Built Teams
-        // ===========================
+        // Collect Built Teams
         int successful = 0, failed = 0;
-
         for (Future<Team> f : futures) {
             try {
                 Team t = f.get();
@@ -114,7 +109,6 @@ public class TeamBuilder {
                 } else {
                     failed++;
                 }
-
             } catch (Exception e) {
                 failed++;
                 logger.log("ERROR", "Team creation failed: " + e.getMessage());
@@ -122,37 +116,154 @@ public class TeamBuilder {
             }
         }
 
-        logger.log("INFO", "Team building summary: " + successful + " successful, " + failed + " failed");
+        logger.log("INFO", "Phase 1 summary: " + successful + " successful, " + failed + " failed");
+        System.out.println("\n✅ Phase 1 Complete: " + successful + " teams formed with all constraints");
 
         executor.shutdown();
         executor.awaitTermination(30, TimeUnit.SECONDS);
 
-
         // ===========================
-        // 5️⃣ Distribute Remaining Participants
+        // 3️⃣ Check Remaining Participants
         // ===========================
         List<Participant> remaining = new ArrayList<>();
         personalityQueues.values().forEach(q -> q.drainTo(remaining));
 
+        int remainingLeaders = (int) remaining.stream()
+                .filter(p -> p.getPersonalityType() == PersonalityType.LEADER)
+                .count();
+        int remainingThinkers = (int) remaining.stream()
+                .filter(p -> p.getPersonalityType() == PersonalityType.THINKER)
+                .count();
+        int remainingBalanced = (int) remaining.stream()
+                .filter(p -> p.getPersonalityType() == PersonalityType.BALANCED)
+                .count();
+
+        System.out.println("\n📊 Remaining Participants: " + remaining.size());
+        System.out.println("   - Leaders: " + remainingLeaders);
+        System.out.println("   - Thinkers: " + remainingThinkers);
+        System.out.println("   - Balanced: " + remainingBalanced);
+
+        logger.log("INFO", "Remaining participants: " + remaining.size() +
+                " (L:" + remainingLeaders + " T:" + remainingThinkers + " B:" + remainingBalanced + ")");
+
+        // ===========================
+        // 4️⃣ Ask User About Flexible Teams
+        // ===========================
+        if (remaining.size() >= teamSize && remainingLeaders > 0 && remainingThinkers > 0) {
+            System.out.println("\n❓ Would you like to form additional teams with relaxed constraints?");
+            System.out.println("   (Team size and core requirements still enforced, but game/role diversity relaxed)");
+            System.out.print("   Enter 'yes' or 'no': ");
+
+            Scanner scanner = new Scanner(System.in);
+            String response = scanner.nextLine().trim().toLowerCase();
+
+            if (response.equals("yes") || response.equals("y")) {
+                logger.log("INFO", "User chose to form flexible teams");
+
+                // ===========================
+                // 5️⃣ PHASE 2: Flexible Team Formation
+                // ===========================
+                System.out.println("\n=== PHASE 2: Forming teams with relaxed constraints ===");
+                logger.log("INFO", "=== PHASE 2: Flexible team formation started ===");
+
+                // Refill queues with remaining participants
+                for (Participant p : remaining) {
+                    personalityQueues.get(p.getPersonalityType()).offer(p);
+                }
+
+                // Calculate max flexible teams
+                int maxFlexibleTeams = Math.min(
+                        Math.min(remaining.size() / teamSize, remainingLeaders),
+                        remainingThinkers  // Need at least 1 thinker per team
+                );
+
+                logger.log("INFO", "Attempting " + maxFlexibleTeams + " flexible teams");
+
+                // Create new executor for Phase 2
+                ExecutorService flexExecutor = Executors.newFixedThreadPool(numThreads);
+                List<Future<Team>> flexFutures = new ArrayList<>();
+
+                for (int i = 0; i < maxFlexibleTeams; i++) {
+                    Future<Team> f = flexExecutor.submit(() ->
+                            formSingleTeamFromQueues(
+                                    personalityQueues,
+                                    "Team-" + teamCounter.getAndIncrement(),
+                                    false  // Flexible mode
+                            )
+                    );
+                    flexFutures.add(f);
+                }
+
+                // Collect flexible teams
+                int flexSuccessful = 0, flexFailed = 0;
+                for (Future<Team> f : flexFutures) {
+                    try {
+                        Team t = f.get();
+                        if (t != null && t.getCurrentSize() > 0) {
+                            allTeams.add(t);
+                            flexSuccessful++;
+                        } else {
+                            flexFailed++;
+                        }
+                    } catch (Exception e) {
+                        flexFailed++;
+                        logger.log("ERROR", "Flexible team creation failed: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+
+                logger.log("INFO", "Phase 2 summary: " + flexSuccessful + " successful, " + flexFailed + " failed");
+                System.out.println("\n✅ Phase 2 Complete: " + flexSuccessful + " flexible teams formed");
+
+                flexExecutor.shutdown();
+                flexExecutor.awaitTermination(30, TimeUnit.SECONDS);
+
+                // Update remaining participants
+                remaining.clear();
+                personalityQueues.values().forEach(q -> q.drainTo(remaining));
+            } else {
+                logger.log("INFO", "User declined flexible team formation");
+                System.out.println("\n⏭️  Skipping flexible team formation");
+            }
+        } else {
+            logger.log("INFO", "Insufficient participants for flexible teams");
+            System.out.println("\n⏭️  Not enough participants for additional teams");
+        }
+
+        // ===========================
+        // 6️⃣ Distribute Final Remaining Participants
+        // ===========================
         if (!remaining.isEmpty() && !allTeams.isEmpty()) {
             logger.log("INFO", "Distributing " + remaining.size() + " remaining participants");
+            System.out.println("\n📝 Distributing " + remaining.size() + " remaining participants to existing teams...");
             distributeRemaining(remaining, allTeams);
-            System.out.println("📝 Distributing " + remaining.size() + " remaining participants...");
         }
+
+        // ===========================
+        // 7️⃣ Final Summary
+        // ===========================
+        System.out.println("\n" + "=".repeat(50));
+        System.out.println("✅ TEAM BUILDING COMPLETE!");
+        System.out.println("=".repeat(50));
+        System.out.println("Total Teams Formed: " + allTeams.size());
+        System.out.println("Total Participants Placed: " +
+                allTeams.stream().mapToInt(Team::getCurrentSize).sum());
+        System.out.println("=".repeat(50));
 
         logger.log("INFO", "Concurrent team building finished with " + allTeams.size() + " final teams");
         return allTeams;
     }
 
     /**
-     * ✅ NEW METHOD: Form team from queue (no race conditions)
+     * Form team from queues with either strict or flexible constraints
      */
-
     private Team formSingleTeamFromQueues(
             Map<PersonalityType, BlockingQueue<Participant>> queues,
-            String teamId) {
+            String teamId,
+            boolean strictMode) {
 
-        logger.log("INFO", "Thread forming " + teamId);
+        String mode = strictMode ? "[STRICT]" : "[FLEXIBLE]";
+        logger.log("INFO", "Thread forming " + teamId + " " + mode);
 
         Team team = new Team(teamId, teamSize);
         List<Participant> selected = new ArrayList<>();
@@ -162,7 +273,7 @@ public class TeamBuilder {
         BlockingQueue<Participant> balanced  = queues.get(PersonalityType.BALANCED);
 
         try {
-            // 1️⃣ Always get a Leader
+            // 1️⃣ Always get a Leader (REQUIRED in both modes)
             Participant leader = leaders.poll(500, TimeUnit.MILLISECONDS);
             if (leader == null) {
                 logger.log("WARN", teamId + ": No leader available, aborting team");
@@ -171,60 +282,112 @@ public class TeamBuilder {
             team.addMember(leader);
             selected.add(leader);
 
-            // 2️⃣ Add Thinkers (1–2)
-            int thinkersNeeded = teamSize > 5 ? 2 : 1;
-            for (int i = 0; i < thinkersNeeded; i++) {
+            // 2️⃣ Add Thinkers (1–2, REQUIRED in both modes)
+            int thinkersMin = 1;
+            int thinkersTarget = teamSize > 5 ? 2 : 1;
+            int thinkersAdded = 0;
+
+            for (int i = 0; i < thinkersTarget * 3 && thinkersAdded < thinkersTarget; i++) {
                 Participant t = thinkers.poll(300, TimeUnit.MILLISECONDS);
-                if (t != null && canAddToTeam(team, t)) {
-                    team.addMember(t);
-                    selected.add(t);
+                if (t != null) {
+                    if (strictMode) {
+                        if (canAddToTeam(team, t)) {
+                            team.addMember(t);
+                            selected.add(t);
+                            thinkersAdded++;
+                        }
+                        else {
+                            thinkers.offer(t);  // Return to queue
+                        }
+                    } else {
+                        // Flexible mode - only check personality limits
+                        if (canAddToTeamFlexible(team, t)) {
+                            team.addMember(t);
+                            selected.add(t);
+                            thinkersAdded++;
+                        } else {
+                            thinkers.offer(t);
+                        }
+                    }
+                } else {
+                    break;
                 }
+
             }
 
-            // 3️⃣ Fill remaining slots
-            int attempts = 0;
-            int MAX_ATTEMPTS = balanced.size() * 2;
-
-            while (!team.isFull() && attempts < MAX_ATTEMPTS) {
-                attempts++;
-                Participant p = balanced.poll();
-                if (p == null) break;
-
-                if (canAddToTeam(team, p)) {
-                    team.addMember(p);
-                } else {
-                    balanced.offer(p);
-                }
-
-
-        }
-
-            if (team.getCurrentSize() < teamSize) {
-                // Incomplete team → return members to queues
-                logger.log("WARN", teamId + " incomplete, returning members");
-                System.err.println("⚠ " + teamId + " incomplete (" + team.getCurrentSize() + "/" + teamSize + ")");
+            // Check minimum thinker requirement
+            if (thinkersAdded < thinkersMin) {
+                logger.log("WARN", teamId + ": Failed to get minimum thinkers, aborting");
                 selected.forEach(p -> queues.get(p.getPersonalityType()).offer(p));
                 return null;
             }
 
-            logger.log("INFO", teamId + " formed successfully");
-            System.out.println("✓ " + teamId + " formed successfully");
+            // 3️⃣ Fill remaining slots
+            int maxAttempts = (balanced.size() + thinkers.size() + leaders.size()) * 2;
+            int attempts = 0;
+            int emptyPollCount = 0;
+            int maxEmptyPolls = strictMode ? 4 : 8;
+
+            while (team.getCurrentSize() < teamSize && emptyPollCount < maxEmptyPolls) {
+                Participant p = null;
+                attempts++;
+
+                if (attempts > maxAttempts) break;
+
+                // Try balanced queue first
+                p = balanced.poll(200, TimeUnit.MILLISECONDS);
+
+                // Try thinker queue if can add more (max 2)
+                if (p == null && team.countPersonalityType(PersonalityType.THINKER) < 2) {
+                    p = thinkers.poll(200, TimeUnit.MILLISECONDS);
+                }
+
+                // In flexible mode, try leaders to fill slots
+                if (p == null && !strictMode) {
+                    p = leaders.poll(200, TimeUnit.MILLISECONDS);
+                }
+
+                if (p != null) {
+                    boolean canAdd = strictMode ? canAddToTeam(team, p) : canAddToTeamFlexible(team, p);
+
+                    if (canAdd) {
+                        team.addMember(p);
+                        selected.add(p);
+                        emptyPollCount = 0;
+                    } else {
+                        // Return to appropriate queue
+                        queues.get(p.getPersonalityType()).offer(p);
+                        emptyPollCount++;
+                    }
+                } else {
+                    emptyPollCount++;
+                }
+            }
+
+            // Check if team is complete
+            if (team.getCurrentSize() < teamSize) {
+                logger.log("WARN", teamId + " " + mode + " incomplete (" +
+                        team.getCurrentSize() + "/" + teamSize + "), returning members");
+                System.err.println("⚠ " + teamId + " " + mode + " incomplete (" +
+                        team.getCurrentSize() + "/" + teamSize + ")");
+                selected.forEach(p -> queues.get(p.getPersonalityType()).offer(p));
+                return null;
+            }
+
+            logger.log("INFO", teamId + " " + mode + " formed successfully");
+            System.out.println("✓ " + teamId + " formed " + mode);
             return team;
 
         } catch (Exception e) {
             logger.log("ERROR", teamId + " formation interrupted");
             System.err.println("⚠ " + teamId + " formation interrupted");
-
-            // return all members
             selected.forEach(p -> queues.get(p.getPersonalityType()).offer(p));
-
             return null;
         }
     }
 
     /**
      * Pre-process participants: stratify by personality, shuffle within groups.
-     * This ensures better distribution across teams.
      */
     private List<Participant> preprocessParticipants(List<Participant> participants) {
         Map<PersonalityType, List<Participant>> grouped = participants.stream()
@@ -232,7 +395,6 @@ public class TeamBuilder {
 
         List<Participant> result = new ArrayList<>();
 
-        // Shuffle each group and add in order: Leaders, Thinkers, Balanced
         for (PersonalityType type : Arrays.asList(
                 PersonalityType.LEADER,
                 PersonalityType.THINKER,
@@ -249,15 +411,12 @@ public class TeamBuilder {
         return result;
     }
 
-
     /**
-     * Check if participant can be added to team (validates ALL constraints).
+     * STRICT mode: Check ALL constraints
      */
     private boolean canAddToTeam(Team team, Participant p) {
-        // Constraint 1: Game variety (max 2 from same game)
+        // Constraint 1: Game variety
         if (team.countGame(p.getPreferredSport()) >= maxSameGame) {
-            logger.log("DEBUG", String.format("Reject %s for team %s: too many players from game %s",
-                    p.getName(), team.getID(), p.getPreferredSport()));
             return false;
         }
 
@@ -266,15 +425,11 @@ public class TeamBuilder {
         long leaderCount = team.countPersonalityType(PersonalityType.LEADER);
         long thinkerCount = team.countPersonalityType(PersonalityType.THINKER);
 
-        // Max 1 leader per team (strict)
         if (pt == PersonalityType.LEADER && leaderCount >= 1) {
-            logger.log("DEBUG", String.format("Reject %s for team %s: leader limit reached", p.getName(), team.getID()));
             return false;
         }
 
-        // Max 2 thinkers per team
         if (pt == PersonalityType.THINKER && thinkerCount >= 2) {
-            logger.log("DEBUG", String.format("Reject %s for team %s: thinker limit reached", p.getName(), team.getID()));
             return false;
         }
 
@@ -282,81 +437,90 @@ public class TeamBuilder {
     }
 
     /**
-     * Calculate fit score for a participant to a team (0-100).
-     * Higher score = better fit.
+     * FLEXIBLE mode: Only check core constraints (team size, leader, thinkers)
+     * Game variety and role diversity are RELAXED
+     */
+    private boolean canAddToTeamFlexible(Team team, Participant p) {
+        PersonalityType pt = p.getPersonalityType();
+        long thinkerCount = team.countPersonalityType(PersonalityType.THINKER);
+
+        // Max 2 thinkers (still enforced)
+        if (pt == PersonalityType.THINKER && thinkerCount >= 2) {
+            return false;
+        }
+
+        // Multiple leaders allowed in flexible mode (to fill teams)
+        // No game or role restrictions in flexible mode
+
+        return true;
+    }
+
+    /**
+     * Calculate fit score for participant
      */
     private double calculateFitScore(Team team, Participant p) {
         double score = 0;
 
-        // CRITERION 1: Role Diversity (30 points)
+        // Role Diversity
         if (!team.hasRole(p.getPreferredRole())) {
-            score += 30; // New role adds significant value
+            score += 30;
         } else {
-            score += 5; // Duplicate role is okay but less valuable
+            score += 5;
         }
 
-        // CRITERION 2: Game Variety (25 points)
+        // Game Variety
         long sameGameCount = team.countGame(p.getPreferredSport());
         if (sameGameCount == 0) {
-            score += 25; // New game is excellent
+            score += 25;
         } else if (sameGameCount == 1) {
-            score += 12; // Second from same game is acceptable
+            score += 12;
         }
-        // sameGameCount >= 2 already filtered out by canAddToTeam
 
-        // CRITERION 3: Personality Balance (25 points)
+        // Personality Balance
         PersonalityType pt = p.getPersonalityType();
         long leaderCount = team.countPersonalityType(PersonalityType.LEADER);
         long thinkerCount = team.countPersonalityType(PersonalityType.THINKER);
-        long balancedCount = team.countPersonalityType(PersonalityType.BALANCED);
 
         if (pt == PersonalityType.LEADER && leaderCount == 0) {
-            score += 25; // First leader is CRITICAL
+            score += 25;
         } else if (pt == PersonalityType.THINKER && thinkerCount < 2) {
-            score += 20; // Thinkers are valuable (1-2 needed)
+            score += 20;
         } else if (pt == PersonalityType.BALANCED) {
-            score += 15; // Balanced members fill gaps well
+            score += 15;
         }
 
-        // CRITERION 4: Skill Balance (15 points)
+        // Skill Balance
         double currentAvg = team.getAverageSkill();
         if (team.getCurrentSize() == 0) {
-            // First member: prefer mid-range skills
             score += 15 - Math.abs(p.getSkillLevel() - 65) / 5.0;
         } else {
-            double targetAvg = 60; // Target average skill
+            double targetAvg = 60;
             double newAvg = (currentAvg * team.getCurrentSize() + p.getSkillLevel())
                     / (team.getCurrentSize() + 1);
             double deviation = Math.abs(newAvg - targetAvg);
-            score += Math.max(0, 15 - deviation / 3.0); // Penalize large deviations
+            score += Math.max(0, 15 - deviation / 3.0);
         }
 
-        // CRITERION 5: Randomization Factor (5 points)
-        // Ensures fairness when multiple candidates have similar scores
         score += random.nextDouble() * 5;
 
         return score;
     }
 
-
     /**
-     * Distribute remaining participants to existing teams.
-     * Tries to maintain balance while ensuring no one is left out.
+     * Distribute remaining participants to existing teams
      */
     private void distributeRemaining(List<Participant> remaining, List<Team> teams) {
-        // Sort teams by current size (smallest first)
         teams.sort(Comparator.comparingInt(Team::getCurrentSize));
         logger.log("INFO", "Starting distribution of " + remaining.size() + " remaining participants");
 
         int distributed = 0;
         int lastResort = 0;
         for (Participant p : remaining) {
-            // Try to find a team that can accept this participant
             Team bestTeam = null;
             double bestScore = -1;
 
             for (Team team : teams) {
-                if (team.getCurrentSize() < teamSize + 2) { // Allow slight overflow
+                if (team.getCurrentSize() < teamSize + 2) {
                     double score = calculateFitScore(team, p);
                     if (score > bestScore) {
                         bestScore = score;
@@ -369,9 +533,8 @@ public class TeamBuilder {
                 bestTeam.addMember(p);
                 distributed++;
             } else {
-                // Last resort: add to smallest team regardless
                 teams.get(0).addMember(p);
-                lastResort ++;
+                lastResort++;
                 logger.log("WARN", "Participant " + p.getName() + " added to smallest team as last resort");
             }
         }

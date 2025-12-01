@@ -16,6 +16,7 @@ public class TeamMateApp {
 
         boolean running = true;
         while (running) {
+
             printMenu();
             int choice = getIntInput("Enter choice: ", 1, 7);
 
