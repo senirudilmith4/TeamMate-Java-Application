@@ -1,4 +1,6 @@
-class SurveyException extends Exception {
+package com.seniru.teambuilder.exception;
+
+public class SurveyException extends Exception {
     public SurveyException(String message) {
         super(message);
     }
