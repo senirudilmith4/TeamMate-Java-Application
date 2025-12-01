@@ -1,3 +1,11 @@
+package com.seniru.teambuilder.login;
+
+import com.seniru.teambuilder.app.AppController;
+import com.seniru.teambuilder.model.Participant;
+import com.seniru.teambuilder.model.Team;
+import com.seniru.teambuilder.service.CSVHandler;
+import com.seniru.teambuilder.service.TeamBuilder;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -6,7 +14,7 @@ public class Organizer {
 
     private int teamSize;
     private CSVHandler fileHandler;
-
+    private AppController controller = new AppController();
     private List<Team> formedTeams;
 
     public Organizer(int teamSize) {
@@ -23,17 +31,17 @@ public class Organizer {
     public void uploadCSV() { }
 
     public List<Team> initiateTeamFormation() {
-        if (AppController.participants.isEmpty()) {
+        if (controller.getParticipants().isEmpty()) {
             System.out.println("No participants available to form teams.");
             return new ArrayList<>();
         }
 
         try {
-            // Create TeamBuilder instance with team size (example: 5 per team)
+            // Create com.seniru.teambuilder.service.TeamBuilder instance with team size (example: 5 per team)
             TeamBuilder builder = new TeamBuilder(teamSize); // adjust teamSize as needed
 
             // Form teams concurrently
-            formedTeams = builder.buildTeamsWithConcurrency(AppController.participants);
+            formedTeams = builder.buildTeamsWithConcurrency(controller.getParticipants());
             fileHandler.saveFormedTeams(formedTeams);
             // Display teams
             for (Team team : formedTeams) {
