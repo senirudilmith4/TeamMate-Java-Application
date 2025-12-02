@@ -48,7 +48,7 @@ public class CSVHandler {
         }
     }
 
-    // Convert com.seniru.teambuilder.model.Participant → CSV line
+    // Convert Participant → CSV line
     private String formatParticipant(Participant p) {
         return p.getParticipantId() + "," +
                 p.getName() + "," +

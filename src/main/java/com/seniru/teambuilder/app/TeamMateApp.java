@@ -126,7 +126,7 @@ public class TeamMateApp {
         System.out.println("\n┌─────────────── MAIN MENU ───────────────┐");
         System.out.println("│  1. Add Participant                     │");
         System.out.println("│  2. View Survey Results                 │");
-        System.out.println("│  7. Exit                                │");
+        System.out.println("│  3. Exit                                │");
         System.out.println("└─────────────────────────────────────────┘");
     }
 

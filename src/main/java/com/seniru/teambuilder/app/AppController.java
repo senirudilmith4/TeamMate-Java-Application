@@ -10,6 +10,10 @@ import com.seniru.teambuilder.login.Organizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class AppController {
     private static List<Participant> participants = new ArrayList<>();
@@ -18,6 +22,8 @@ public class AppController {
     private PersonalityClassifier classifier = new PersonalityClassifier();
     private CSVHandler csvHandler = new CSVHandler();
     Scanner scanner = new Scanner(System.in);
+    private final ExecutorService executor = Executors.newFixedThreadPool(4);
+
 
 
     public List<Participant> getParticipants() {
@@ -32,28 +38,60 @@ public class AppController {
         System.out.println("Participants loaded: " + participants.size()); }
 
 
+//    public void completeSurvey() {
+//        try {
+//            Participant p = survey.conductSurvey(); // conducts survey
+//            classifier.classifyParticipant(p);      // classify personality
+//            participants.add(p);                     // store participant
+//            csvHandler.appendParticipant(p);         // save to CSV
+//
+//            System.out.println("Survey completed successfully for: " + p.getName());
+//
+//        } catch (SurveyException e) {
+//            System.err.println("Survey failed: " + e.getMessage());
+//            // Log the error or take appropriate action
+//        } catch (Exception e) {
+//            System.err.println("Unexpected error during survey: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//
+////        System.out.println("✅ com.seniru.teambuilder.model.Participant added successfully!");
+////        System.out.println("   Name: " + p.getName());
+////        System.out.println("   Personality: " + p.getPersonalityType());
+////        System.out.println("   Total participants: " + participants.size());
+////        System.out.println("com.seniru.teambuilder.model.Participant added successfully!");
+//    }
     public void completeSurvey() {
+
         try {
-            Participant p = survey.conductSurvey(); // conducts survey
-            classifier.classifyParticipant(p);      // classify personality
-            participants.add(p);                     // store participant
-            csvHandler.appendParticipant(p);         // save to CSV
+            Participant p = survey.conductSurvey();
 
-            System.out.println("Survey completed successfully for: " + p.getName());
+            // Classification first
+            Future<Void> classificationTask = executor.submit(() -> {
+                classifier.classifyParticipant(p);
+                return null;
+            });
 
-        } catch (SurveyException e) {
-            System.err.println("Survey failed: " + e.getMessage());
-            // Log the error or take appropriate action
+            // Wait for classification to complete
+            classificationTask.get(5, TimeUnit.SECONDS);
+
+            // Add to list (personality is now set)
+            synchronized (participants) {
+                participants.add(p);
+            }
+
+            // CSV writes complete participant (including personality)
+            Future<Void> csvTask = executor.submit(() -> {
+                csvHandler.appendParticipant(p);
+                return null;
+            });
+
+            csvTask.get(10, TimeUnit.SECONDS);
+            System.out.println("✅ Complete for: " + p.getName());
+
         } catch (Exception e) {
-            System.err.println("Unexpected error during survey: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
-
-//        System.out.println("✅ com.seniru.teambuilder.model.Participant added successfully!");
-//        System.out.println("   Name: " + p.getName());
-//        System.out.println("   Personality: " + p.getPersonalityType());
-//        System.out.println("   Total participants: " + participants.size());
-//        System.out.println("com.seniru.teambuilder.model.Participant added successfully!");
     }
 
     public void viewParticipants() {
