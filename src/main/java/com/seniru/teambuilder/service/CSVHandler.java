@@ -41,7 +41,7 @@ public class CSVHandler {
 
             writer.write(formatParticipant(p) + "\n");
 
-            System.out.println("📁 Participant stored in CSV!");
+            System.out.println("📁 Participant stored in participants.csv successfully!");
 
         } catch (IOException e) {
             System.out.println("❌ Error writing CSV: " + e.getMessage());

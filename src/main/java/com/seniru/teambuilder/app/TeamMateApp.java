@@ -95,7 +95,7 @@ public class TeamMateApp {
                     appController.formTeams();
                     break;
                 case 4:
-                   // appController.viewFormedTeams();
+                    appController.viewFormedTeams();
                 case 6:
                     running = false;
                     break;

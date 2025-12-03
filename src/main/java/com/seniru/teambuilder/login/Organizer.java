@@ -12,32 +12,26 @@ import java.util.concurrent.ExecutionException;
 
 public class Organizer {
 
-    private int teamSize;
+
     private CSVHandler fileHandler;
     private AppController controller = new AppController();
     private List<Team> formedTeams;
 
-    public Organizer(int teamSize) {
+    public Organizer() {
         this.fileHandler = new CSVHandler();
         this.formedTeams = new ArrayList<>();
-        this.teamSize = teamSize;
+
     }
 
     // Set team size
-    public void setTeamSize(int teamSize) {
-        this.teamSize = teamSize;
-    }
+
 
     public void uploadCSV() { }
 
-    public List<Team> initiateTeamFormation() {
-        if (controller.getParticipants().isEmpty()) {
-            System.out.println("No participants available to form teams.");
-            return new ArrayList<>();
-        }
+    public List<Team> initiateTeamFormation(int teamSize) {
 
         try {
-            // Create com.seniru.teambuilder.service.TeamBuilder instance with team size (example: 5 per team)
+            // Create TeamBuilder instance with team size
             TeamBuilder builder = new TeamBuilder(teamSize); // adjust teamSize as needed
 
             // Form teams concurrently
