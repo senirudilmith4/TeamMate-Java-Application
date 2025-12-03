@@ -23,6 +23,7 @@ public class AppController {
     private CSVHandler csvHandler = new CSVHandler();
     Scanner scanner = new Scanner(System.in);
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
+    private Participant lastSurveyParticipant;
 
 
 
@@ -65,6 +66,7 @@ public class AppController {
 
         try {
             Participant p = survey.conductSurvey();
+            lastSurveyParticipant = p;
 
             // Classification first
             Future<Void> classificationTask = executor.submit(() -> {
@@ -133,7 +135,22 @@ public class AppController {
     }
 
 
+    public void viewSurveyResults() {
+        try {
+            if (lastSurveyParticipant == null) {
+                System.out.println("❌ No participant has been added yet.");
+                return;
+            }
 
+            Participant p = lastSurveyParticipant;
 
+            System.out.println("\n--- SURVEY RESULTS ---");
+            System.out.println("Name: " + p.getName());
+            System.out.println("Personality Type: " + p.getPersonalityType());
+
+        } catch (Exception e) {
+            System.err.println("❌ Error displaying survey results: " + e.getMessage());
+        }
+    }
 
 }

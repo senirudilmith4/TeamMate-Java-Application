@@ -64,7 +64,7 @@ public class TeamMateApp {
                     appController.completeSurvey();
                     break;
                 case 2:
-                    //  view Survey Results();
+                    appController.viewSurveyResults();
                     break;
                 case 3:
                     running = false;
