@@ -15,6 +15,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import com.seniru.teambuilder.model.Participant;
+
 public class AppController {
     private static List<Participant> participants = new ArrayList<>();
     private static List<Team> formedTeams = new ArrayList<>();
@@ -31,9 +33,6 @@ public class AppController {
         return participants;
     }
 
-//    public List<Team> getFormedTeams() {
-//        return formedTeams;
-//    }
 
 
     public void loadAllParticipantsAtStart() {
@@ -43,7 +42,7 @@ public class AppController {
         System.out.println("Participants loaded: " + participants.size()); }
 
 
-    public void completeSurvey() {
+    public void addParticipant() {
 
         try {
             Participant p = survey.conductSurvey();
@@ -63,13 +62,13 @@ public class AppController {
                 participants.add(p);
             }
 
-            // CSV writes complete participant (including personality)
+            // CSV writes complete participant
             Future<Void> csvTask = executor.submit(() -> {
                 csvHandler.appendParticipant(p);
                 return null;
             });
 
-            csvTask.get(10, TimeUnit.SECONDS);
+            csvTask.get(5, TimeUnit.SECONDS);
             System.out.println("✅ Complete for: " + p.getName());
 
         } catch (Exception e) {
@@ -182,6 +181,7 @@ public class AppController {
             System.out.println("\n--- SURVEY RESULTS ---");
             System.out.println("Name: " + p.getName());
             System.out.println("Personality Type: " + p.getPersonalityType());
+            lastSurveyParticipant = null;
 
         } catch (Exception e) {
             System.err.println("❌ Error displaying survey results: " + e.getMessage());

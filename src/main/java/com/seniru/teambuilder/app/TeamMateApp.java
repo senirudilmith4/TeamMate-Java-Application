@@ -61,7 +61,7 @@ public class TeamMateApp {
 
             switch (choice) {
                 case 1:
-                    appController.completeSurvey();
+                    appController.addParticipant();
                     break;
                 case 2:
                     appController.viewSurveyResults();
@@ -72,7 +72,6 @@ public class TeamMateApp {
             }
         }
 
-        System.out.println("\nThank you for using TeamMate! Goodbye.");
     }
 
     public static void organizerInterface() {
@@ -101,7 +100,6 @@ public class TeamMateApp {
             }
         }
 
-        System.out.println("\nThank you for using TeamMate! Goodbye.");
     }
 
     private static void printBanner() {
@@ -124,7 +122,7 @@ public class TeamMateApp {
         System.out.println("\n┌─────────────── MAIN MENU ───────────────┐");
         System.out.println("│  1. Add Participant                     │");
         System.out.println("│  2. View Survey Results                 │");
-        System.out.println("│  3. Exit                                │");
+        System.out.println("│  3. Back to Login Screen                │");
         System.out.println("└─────────────────────────────────────────┘");
     }
 
@@ -135,7 +133,7 @@ public class TeamMateApp {
         System.out.println("│  3. Form teams                          │");
         System.out.println("│  4. View formed teams                   │");
         System.out.println("│  5. Save results to file                │");
-        System.out.println("│  6. Exit                                │");
+        System.out.println("│  6. Back to Login Screen                │");
         System.out.println("└─────────────────────────────────────────┘");
         System.out.printf("  [Loaded: %d participants, %d teams]\n",
                 appController.getParticipants().size(), formedTeams.size());
