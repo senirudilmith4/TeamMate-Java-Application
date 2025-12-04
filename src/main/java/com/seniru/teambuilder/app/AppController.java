@@ -31,6 +31,10 @@ public class AppController {
         return participants;
     }
 
+//    public List<Team> getFormedTeams() {
+//        return formedTeams;
+//    }
+
 
     public void loadAllParticipantsAtStart() {
         System.out.println("Enter file path: ");
@@ -84,6 +88,105 @@ public class AppController {
             System.out.println(p.getName() + " | Personality: " + p.getPersonalityType());
         }
     }
+    public void viewFormedTeams() {
+        // Load teams from CSV
+        formedTeams = csvHandler.loadFormedTeams("formedTeams.csv");
+
+        if (formedTeams.isEmpty()) {
+            System.out.println("📭 No formed teams found.");
+            return;
+        }
+
+        System.out.println("\n📋 Formed Teams (Showing up to 6 teams):");
+
+        // Display up to 6 teams
+        int displayCount = Math.min(formedTeams.size(), 6);
+        for (int i = 0; i < displayCount; i++) {
+            Team team = formedTeams.get(i);
+            System.out.println("──────── TEAM " + team.getID() + " ────────");
+
+            List<Participant> members = team.getMembers();
+            int count = 1;
+            for (Participant p : members) {
+                System.out.printf("%d. %-15s | %-10s | %-12s | %-12s | %d\n",
+                        count,
+                        p.getName(),
+                        p.getPreferredRole(),
+                        p.getPreferredSport(),
+                        p.getPersonalityType(),
+                        p.getSkillLevel());
+                count++;
+            }
+            System.out.println();  // empty line after each team
+        }
+
+        // Show message if more than 6 teams exist
+        if (formedTeams.size() > 6) {
+            System.out.println("...and " + (formedTeams.size() - 6) + " more teams not displayed.");
+        }
+    }
+
+    //    public void viewFormedTeams() {
+//        formedTeams = csvHandler.loadFormedTeams("formedTeams.csv");
+//
+//        if (formedTeams.isEmpty()) {
+//            System.out.println("📭 No formed teams found.");
+//            return;
+//        }
+//
+//        for (Team t : formedTeams) {
+//            for (Participant p : t.getMembers()) {
+//                System.out.println(" - " + p.getName()
+//                        + " | Role: " + p.getPreferredRole()
+//                        + " | Game: " + p.getPreferredSport()
+//                        + " | Personality: " + p.getPersonalityType()
+//                        + " | Skill: " + p.getSkillLevel());
+//            }
+//        }
+//        System.out.println("\n📋 Formed Teams (Showing up to 6 teams):");
+//
+//        int displayCount = Math.min(formedTeams.size(), 6);
+//
+//        for (int i = 0; i < displayCount; i++) {
+//            Team team = formedTeams.get(i);
+//            System.out.println("──────── TEAM " + team.getID() + " ────────");
+//
+//            List<Participant> members = team.getMembers();
+//            int count = 1;
+//            for (Participant p : members) {
+//                System.out.printf("%d. %-10s | %-10s | %-10s | %s\n",
+//                        count,
+//                        p.getName(),
+//                        p.getPreferredRole(),
+//                        p.getPreferredSport(),
+//                        p.getPersonalityType());
+//                count++;
+//            }
+//            System.out.println();  // empty line after each team
+//        }
+//
+//        // Show message if there are more teams
+//        if (formedTeams.size() > 6) {
+//            System.out.println("...and " + (formedTeams.size() - 6) + " more teams not displayed.");
+//        }
+//   }
+    public void viewSurveyResults() {
+        try {
+            if (lastSurveyParticipant == null) {
+                System.out.println("❌ No participant has been added yet.");
+                return;
+            }
+
+            Participant p = lastSurveyParticipant;
+
+            System.out.println("\n--- SURVEY RESULTS ---");
+            System.out.println("Name: " + p.getName());
+            System.out.println("Personality Type: " + p.getPersonalityType());
+
+        } catch (Exception e) {
+            System.err.println("❌ Error displaying survey results: " + e.getMessage());
+        }
+    }
     public void formTeams() {
 
         if (getParticipants().isEmpty()) {
@@ -112,30 +215,5 @@ public class AppController {
         }
     }
 
-
-    public void viewSurveyResults() {
-        try {
-            if (lastSurveyParticipant == null) {
-                System.out.println("❌ No participant has been added yet.");
-                return;
-            }
-
-            Participant p = lastSurveyParticipant;
-
-            System.out.println("\n--- SURVEY RESULTS ---");
-            System.out.println("Name: " + p.getName());
-            System.out.println("Personality Type: " + p.getPersonalityType());
-
-        } catch (Exception e) {
-            System.err.println("❌ Error displaying survey results: " + e.getMessage());
-        }
-    }
-
-    public List<Team> viewFormedTeams(){
-        for (Team t : formedTeams) {
-            System.out.println(t);
-        }
-        return formedTeams;
-    }
 
 }

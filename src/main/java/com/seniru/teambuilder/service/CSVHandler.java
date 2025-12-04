@@ -5,7 +5,9 @@ import com.seniru.teambuilder.model.*;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CSVHandler {
 
@@ -129,13 +131,84 @@ public class CSVHandler {
         return participants;
     }
 
+    public List<Team> loadFormedTeams(String filePath) {
+        Map<String, Team> teamMap = new HashMap<>();
+        File file = new File(filePath);
+        if (!file.exists()||file.length() == 0) {
+            System.out.println("\uD83D\uDCED No formed teams found. File empty or missing.");
+            return new ArrayList<>();
+        }
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+
+            String line;
+            boolean isHeader = true;
+
+            while ((line = reader.readLine()) != null) {
+
+                // Skip the header line
+                if (isHeader) {
+                    isHeader = false;
+                    continue;
+                }
+
+                String[] data = line.split(",");
+
+                // must match your CSV format
+                if (data.length != 8) {
+                    System.out.println("⚠ Skipping invalid CSV row: " + line);
+                    continue;
+                }
+
+                String teamId = data[0];
+                Team team = teamMap.get(teamId);  //uses the key teamID and returns the object stored
+                if (team == null) {
+                    team = new Team(teamId);
+                    teamMap.put(teamId, team);
+                }
+
+                Participant p = new Participant();
+                p.setParticipantId(data[0]);
+                p.setName(data[1]);
+                p.setEmail(data[2]);
+                p.setPreferredSport(data[3]);
+                // Convert preferredRole (String → Enum com.seniru.teambuilder.model.Role)
+                try{
+                    Role role = Role.valueOf(data[5].toUpperCase());
+                    p.setPreferredRole(role);
+                } catch (Exception e) {
+                    System.out.println("⚠ Invalid role in CSV: " + data[5]);
+                    continue;
+                }
+
+                p.setSkillLevel(Integer.parseInt(data[4])); // skill level
+                p.setPersonalityScore(Integer.parseInt(data[6])); // personality score
+
+                try {
+                    PersonalityType pt = PersonalityType.valueOf(data[7].toUpperCase());
+                    p.setPersonalityType(pt);
+                } catch (Exception e) {
+                    System.out.println("⚠ Invalid personality type in CSV: " + data[6]);
+                    continue;
+                }
+
+                team.addMember(p);
+            }
+
+        } catch (IOException e) {
+            System.out.println("❌ Error reading CSV: " + e.getMessage());
+        }
+
+        return new ArrayList<>(teamMap.values());
+
+    }
+
     public void saveFormedTeams(List<Team> teams) {
         String fileName = "formedTeams.csv";
 
         try (PrintWriter pw = new PrintWriter(new FileWriter(fileName))) {
 
             // Write header
-            pw.println("TeamID,ParticipantID,Name,com.seniru.teambuilder.model.Role,Sport,Skill,Personality");
+            pw.println("TeamID,Name,Email,Sport,Skill,Role,PersonalityScore,PersonalityType");
 
             // Write each team's members
             for (Team team : teams) {
@@ -159,5 +232,7 @@ public class CSVHandler {
             System.out.println("❌ Error writing formedTeams.csv: " + e.getMessage());
         }
     }
+
+
 
 }

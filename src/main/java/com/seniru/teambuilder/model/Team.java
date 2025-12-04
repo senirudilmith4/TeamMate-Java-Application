@@ -8,7 +8,7 @@ import java.util.Map;
 public class Team {
     private String id;
     private final List<Participant> members;
-    private final int maxMembers;   // teams cannot be changed after formation
+    private  int maxMembers;   // teams cannot be changed after formation
 
     public Team(String id,int maxMembers) {
         if (maxMembers < 2) {
@@ -16,15 +16,21 @@ public class Team {
         }
         this.id = id;
         this.maxMembers = maxMembers;
-        this.members = new ArrayList<>();  // Aggregation
+        this.members = new ArrayList<>();
+    }
+
+    public Team(String id) {
+        this.id=id;
+        this.members = new ArrayList<>();
     }
 
     public boolean addMember(Participant p) {
         if (members.size() >= maxMembers) return false;
         if (members.contains(p)) return false;
-        members.add(p);
+        members.add(p);    // team receives an existing participant(Aggregation)
         return true;
     }
+
 
     public boolean isFull() {
         return members.size() >= maxMembers;

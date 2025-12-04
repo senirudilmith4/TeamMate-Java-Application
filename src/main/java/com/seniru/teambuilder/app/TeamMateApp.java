@@ -73,7 +73,6 @@ public class TeamMateApp {
         }
 
         System.out.println("\nThank you for using TeamMate! Goodbye.");
-        scanner.close();
     }
 
     public static void organizerInterface() {
@@ -103,7 +102,6 @@ public class TeamMateApp {
         }
 
         System.out.println("\nThank you for using TeamMate! Goodbye.");
-        scanner.close();
     }
 
     private static void printBanner() {
