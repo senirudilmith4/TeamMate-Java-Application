@@ -11,7 +11,15 @@ import java.util.Map;
 
 public class CSVHandler {
 
-    private static final String filePath = "participants.csv";
+    private static  String filePath = "participants.csv";
+
+    public CSVHandler() {
+        this.filePath = "participants.csv";
+    }
+
+    public CSVHandler(String filePath) {
+        this.filePath = filePath;
+    }
 
     // Save list of participants (overwrite file)
     public void saveAllParticipants(List<Participant> participants) {
@@ -167,7 +175,7 @@ public class CSVHandler {
                 }
 
                 Participant p = new Participant();
-                p.setParticipantId(data[0]);
+                //p.setParticipantId(data[1]);
                 p.setName(data[1]);
                 p.setEmail(data[2]);
                 p.setPreferredSport(data[3]);
