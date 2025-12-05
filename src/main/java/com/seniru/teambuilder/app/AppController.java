@@ -2,7 +2,6 @@ package com.seniru.teambuilder.app;
 
 import com.seniru.teambuilder.model.Participant;
 import com.seniru.teambuilder.model.Team;
-import com.seniru.teambuilder.exception.SurveyException;
 import com.seniru.teambuilder.service.CSVHandler;
 import com.seniru.teambuilder.service.SurveyProcess;
 import com.seniru.teambuilder.service.PersonalityClassifier;
@@ -15,7 +14,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import com.seniru.teambuilder.model.Participant;
 
 public class AppController {
     private static List<Participant> participants = new ArrayList<>();
@@ -125,50 +123,7 @@ public class AppController {
         }
     }
 
-    //    public void viewFormedTeams() {
-//        formedTeams = csvHandler.loadFormedTeams("formedTeams.csv");
-//
-//        if (formedTeams.isEmpty()) {
-//            System.out.println("📭 No formed teams found.");
-//            return;
-//        }
-//
-//        for (Team t : formedTeams) {
-//            for (Participant p : t.getMembers()) {
-//                System.out.println(" - " + p.getName()
-//                        + " | Role: " + p.getPreferredRole()
-//                        + " | Game: " + p.getPreferredSport()
-//                        + " | Personality: " + p.getPersonalityType()
-//                        + " | Skill: " + p.getSkillLevel());
-//            }
-//        }
-//        System.out.println("\n📋 Formed Teams (Showing up to 6 teams):");
-//
-//        int displayCount = Math.min(formedTeams.size(), 6);
-//
-//        for (int i = 0; i < displayCount; i++) {
-//            Team team = formedTeams.get(i);
-//            System.out.println("──────── TEAM " + team.getID() + " ────────");
-//
-//            List<Participant> members = team.getMembers();
-//            int count = 1;
-//            for (Participant p : members) {
-//                System.out.printf("%d. %-10s | %-10s | %-10s | %s\n",
-//                        count,
-//                        p.getName(),
-//                        p.getPreferredRole(),
-//                        p.getPreferredSport(),
-//                        p.getPersonalityType());
-//                count++;
-//            }
-//            System.out.println();  // empty line after each team
-//        }
-//
-//        // Show message if there are more teams
-//        if (formedTeams.size() > 6) {
-//            System.out.println("...and " + (formedTeams.size() - 6) + " more teams not displayed.");
-//        }
-//   }
+
     public void viewSurveyResults() {
         try {
             if (lastSurveyParticipant == null) {

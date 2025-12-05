@@ -42,7 +42,7 @@ public class TeamBuilder {
     }
 
     /**
-     * Build teams from participants using CONCURRENT processing with optional flexible phase.
+     * Build teams from participants using concurrent processing with optional flexible phase.
      * This is the main method that uses threads to form teams in parallel.
      */
     public List<Team> buildTeamsWithConcurrency(List<Participant> participants)
@@ -58,9 +58,9 @@ public class TeamBuilder {
         List<Participant> sortedPool = preprocessParticipants(participants);
         logger.log("INFO", "Participants preprocessed and sorted by personality type");
 
-        // ===========================
-        // 1️⃣ Personality-Based Queues
-        // ===========================
+
+       //Personality-Based Queues
+
         Map<PersonalityType, BlockingQueue<Participant>> personalityQueues = new HashMap<>();
         personalityQueues.put(PersonalityType.LEADER,   new LinkedBlockingQueue<>());
         personalityQueues.put(PersonalityType.THINKER,  new LinkedBlockingQueue<>());

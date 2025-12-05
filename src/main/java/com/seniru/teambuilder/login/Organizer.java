@@ -26,8 +26,6 @@ public class Organizer {
     // Set team size
 
 
-    public void uploadCSV() { }
-
     public List<Team> initiateTeamFormation(int teamSize) {
 
         try {
@@ -63,5 +61,4 @@ public class Organizer {
     }
 
 
-    public void exportTeams() { }
 }

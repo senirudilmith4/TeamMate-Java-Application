@@ -6,7 +6,7 @@ import com.seniru.teambuilder.model.Team;
 import java.util.*;
 
 /**
- * TeamMate: Intelligent com.seniru.teambuilder.model.Team Formation System
+ * TeamMate: Intelligent Team Formation System
  * Main application class with console interface.
  */
 public class TeamMateApp {
@@ -80,7 +80,7 @@ public class TeamMateApp {
         while (running) {
 
             organizerMenu();
-            int choice = getIntInput("Enter choice: ", 1, 6);
+            int choice = getIntInput("Enter choice: ", 1, 5);
 
             switch (choice) {
                 case 1:
@@ -94,7 +94,8 @@ public class TeamMateApp {
                     break;
                 case 4:
                     appController.viewFormedTeams();
-                case 6:
+                    break;
+                case 5:
                     running = false;
                     break;
             }
@@ -132,8 +133,7 @@ public class TeamMateApp {
         System.out.println("│  2. Load participants from CSV          │");
         System.out.println("│  3. Form teams                          │");
         System.out.println("│  4. View formed teams                   │");
-        System.out.println("│  5. Save results to file                │");
-        System.out.println("│  6. Back to Login Screen                │");
+        System.out.println("│  5. Back to Login Screen                │");
         System.out.println("└─────────────────────────────────────────┘");
         System.out.printf("  [Loaded: %d participants, %d teams]\n",
                 appController.getParticipants().size(), formedTeams.size());

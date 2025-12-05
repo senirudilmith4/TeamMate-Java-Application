@@ -21,6 +21,7 @@ public class Team {
 
     public Team(String id) {
         this.id=id;
+        this.maxMembers=20;
         this.members = new ArrayList<>();
     }
 
@@ -40,13 +41,6 @@ public class Team {
         return new ArrayList<>(members);
     }
 
-    public List<String> getRolesInTeam() {
-        return null;
-    }
-
-//    public List<String> getInterestsInTeam() {
-//        return null;
-//    }
 
     public Map<PersonalityType, Integer> getPersonalityDistribution() {
         Map<PersonalityType, Integer> map = new HashMap<>();
