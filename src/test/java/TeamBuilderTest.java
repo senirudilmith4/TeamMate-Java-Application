@@ -26,12 +26,12 @@ class TeamBuilderTest {
 
         // Create a small participant list
         participants = Arrays.asList(
-                new Participant("Alice", "alice@example.com", "Football",Role.COORDINATOR, 10, 70,PersonalityType.LEADER),
-                new Participant("Bob", "bob@example.com", "Football", Role.DEFENDER, 8, 60,PersonalityType.THINKER),
-                new Participant("Charlie", "charlie@example.com", "Basketball", Role.STRATEGIST, 6, 65,PersonalityType.BALANCED),
-                new Participant("Diana", "diana@example.com", "Tennis", Role.SUPPORTER, 9, 75,PersonalityType.LEADER),
-                new Participant("Eve", "Eve", "Volleyball", Role.ATTACKER, 55, 7, PersonalityType.THINKER),
-                new Participant("Frank", "Frank", "Basketball", Role.DEFENDER, 68, 7, PersonalityType.BALANCED)
+                new Participant("P1","Alice", "alice@example.com", "Football",Role.COORDINATOR, 10, 70,PersonalityType.LEADER),
+                new Participant("P2","Bob", "bob@example.com", "Football", Role.DEFENDER, 8, 60,PersonalityType.THINKER),
+                new Participant("P3","Charlie", "charlie@example.com", "Basketball", Role.STRATEGIST, 6, 65,PersonalityType.BALANCED),
+                new Participant("P4","Diana", "diana@example.com", "Tennis", Role.SUPPORTER, 9, 75,PersonalityType.LEADER),
+                new Participant("P5","Eve", "Eve", "Volleyball", Role.ATTACKER, 55, 7, PersonalityType.THINKER),
+                new Participant("P6","Frank", "Frank", "Basketball", Role.DEFENDER, 68, 7, PersonalityType.BALANCED)
 
         );
     }
@@ -59,9 +59,9 @@ class TeamBuilderTest {
     void testCanAddToTeam_strictMode_constraints() {
         Team team = new Team("Team-1", 3);
 
-        Participant leader=new Participant("Alice", "alice@example.com", "Football",Role.COORDINATOR, 10, 70,PersonalityType.LEADER);
-        Participant thinker=new Participant("Bob", "bob@example.com", "Football", Role.DEFENDER, 8, 60,PersonalityType.THINKER);
-        Participant balanced=new Participant("Charlie", "charlie@example.com", "Basketball", Role.STRATEGIST, 6, 65,PersonalityType.BALANCED);
+        Participant leader=new Participant("P1","Alice", "alice@example.com", "Football",Role.COORDINATOR, 10, 70,PersonalityType.LEADER);
+        Participant thinker=new Participant("P2","Bob", "bob@example.com", "Football", Role.DEFENDER, 8, 60,PersonalityType.THINKER);
+        Participant balanced=new Participant("P3","Charlie", "charlie@example.com", "Basketball", Role.STRATEGIST, 6, 65,PersonalityType.BALANCED);
         team.addMember(leader);
         team.addMember(thinker);
 

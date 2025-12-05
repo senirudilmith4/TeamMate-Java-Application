@@ -12,10 +12,10 @@ public class Participant {
     private int[] responses;
 
     // parameterized constructor
-    public Participant(String id, String name, String preferredSport, Role preferredRole, int skillLevel, int personalityScore, PersonalityType personalityType) {
+    public Participant(String id, String name,String email, String preferredSport, Role preferredRole, int skillLevel, int personalityScore, PersonalityType personalityType) {
         this.id = id;
         this.name = name;
-
+        this.email = email;
         this.preferredSport = preferredSport;
         this.preferredRole = preferredRole;
         this.skillLevel = skillLevel;
