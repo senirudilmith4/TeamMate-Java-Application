@@ -1,3 +1,7 @@
+![Java](https://img.shields.io/badge/Java-17%2B-orange)
+![Build](https://img.shields.io/badge/Build-Maven-blue)
+![Tests](https://img.shields.io/badge/Tests-JUnit5-success)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 # 🧩TeamMate Application
 
