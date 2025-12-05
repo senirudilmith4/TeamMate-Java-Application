@@ -12,7 +12,7 @@ public class Participant {
     private int[] responses;
 
     // parameterized constructor
-    public Participant(String id, String name, String preferredSport, Role preferredRole, int skillLevel, int personalityScore) {
+    public Participant(String id, String name, String preferredSport, Role preferredRole, int skillLevel, int personalityScore, PersonalityType personalityType) {
         this.id = id;
         this.name = name;
 
@@ -20,6 +20,7 @@ public class Participant {
         this.preferredRole = preferredRole;
         this.skillLevel = skillLevel;
         this.personalityScore = personalityScore;
+        this.personalityType = personalityType;
 
     }
 
