@@ -12,7 +12,7 @@ public class OrganizerLogin {
     private static Map<String,String> organizers = new HashMap<>();
     static {
         try{
-            BufferedReader br = new BufferedReader(new FileReader("organizers.txt"));
+            BufferedReader br = new BufferedReader(new FileReader("resources/organizers.txt"));
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
